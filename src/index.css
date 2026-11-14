@@ -118,3 +118,38 @@
     transition-duration: 0.01ms !important;
   }
 }
+
+/* The login page's one animated moment: the compounding curve draws itself, then its end point lands. */
+@keyframes curve-draw {
+  from {
+    stroke-dashoffset: 1;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+@keyframes curve-dot {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+.curve-draw {
+  stroke-dasharray: 1;
+  animation: curve-draw 1.8s cubic-bezier(0.65, 0, 0.35, 1) both;
+}
+.curve-dot {
+  animation: curve-dot 0.4s ease-out 1.7s both;
+}
+
+/* The login page's dark panel: the inverse of the form side in light mode, a deeper well in dark mode. */
+.auth-aside {
+  background: var(--ink);
+  color: var(--paper);
+}
+.dark .auth-aside {
+  background: var(--sunken);
+  color: var(--ink);
+}

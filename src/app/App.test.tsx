@@ -1,8 +1,13 @@
 import { screen, within } from '@testing-library/react'
+import { signIn } from '@/test/auth'
 import { renderRoutes } from '@/test/renderWithProviders'
 import { routes } from './routes'
 
 describe('app shell', () => {
+  beforeEach(() => {
+    signIn()
+  })
+
   it('opens on Today', async () => {
     renderRoutes(routes, { route: '/' })
 
