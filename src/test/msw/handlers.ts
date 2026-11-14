@@ -1,5 +1,5 @@
 import { http, HttpResponse, type RequestHandler } from 'msw'
-import type { JournalEntry } from '@/api/types'
+import type { Habit, JournalEntry } from '@/api/types'
 import { makeToken, testUser } from '../auth'
 import { db, newId } from './db'
 
@@ -86,4 +86,53 @@ export const handlers: RequestHandler[] = [
 
   // AiController.getTipOfTheDay: 200 { response }
   http.get(`${API}/api/ai/tip`, () => HttpResponse.json({ response: db.tip })),
+
+  // HabitController. `completed` means "done today" and is derived from today's history on the server.
+  http.get(`${API}/api/habits/me`, () => HttpResponse.json(db.habits)),
+
+  http.post(`${API}/api/habits/create`, async ({ request }) => {
+    const body = (await request.json()) as Partial<Habit>
+    if (body.habitType === 'trigger-action' && (!body.trigger || !body.action)) {
+      return new HttpResponse('Recommended habits must have both a trigger and an action.', { status: 400 })
+    }
+    const created = { ...body, id: newId('h'), completed: false } as Habit
+    db.habits = [...db.habits, created]
+    return HttpResponse.json(created)
+  }),
+
+  http.put(`${API}/api/habits/update`, async ({ request }) => {
+    const body = (await request.json()) as Habit
+    const existing = db.habits.find((h) => h.id === body.id)
+    if (!existing) return new HttpResponse(`Habit not found: ${body.id}`, { status: 404 })
+    // the server ignores `completed` on update: today's history decides it
+    const updated = { ...existing, ...body, completed: existing.completed }
+    db.habits = db.habits.map((h) => (h.id === updated.id ? updated : h))
+    return HttpResponse.json(updated)
+  }),
+
+  http.delete(`${API}/api/habits/delete/:id`, ({ params }) => {
+    if (!db.habits.some((h) => h.id === params.id)) return new HttpResponse(`Habit not found: ${params.id}`, { status: 404 })
+    db.habits = db.habits.filter((h) => h.id !== params.id)
+    return new HttpResponse(null, { status: 204 })
+  }),
+
+  // HabitHistoryController: complete / uncomplete write today's record and return it
+  ...(['complete', 'uncomplete'] as const).map((action) =>
+    http.post(`${API}/api/habit-history/${action}/:id`, ({ params }) => {
+      const id = String(params.id)
+      if (!db.habits.some((h) => h.id === id)) return new HttpResponse(`Habit not found: ${id}`, { status: 404 })
+      const completed = action === 'complete'
+      const record = { habitId: id, date: db.today, completed }
+      db.habits = db.habits.map((h) => (h.id === id ? { ...h, completed } : h))
+      db.history = [...db.history.filter((r) => !(r.habitId === id && r.date === db.today)), record]
+      return HttpResponse.json({ id: newId('r'), userId: testUser.id, ...record })
+    }),
+  ),
+
+  http.get(`${API}/api/habit-history`, () => HttpResponse.json(db.history)),
+
+  http.get(`${API}/api/habit-history/:id`, ({ params }) => {
+    if (!db.habits.some((h) => h.id === params.id)) return new HttpResponse(`Habit not found: ${params.id}`, { status: 404 })
+    return HttpResponse.json(db.history.filter((r) => r.habitId === params.id))
+  }),
 ]

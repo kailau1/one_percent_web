@@ -30,6 +30,7 @@ export interface Habit {
 }
 
 export interface HabitHistoryRecord {
+  habitId: string
   /** Calendar day "YYYY-MM-DD". Parse as a day, never with new Date(string). */
   date: string
   completed: boolean

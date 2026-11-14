@@ -7,10 +7,20 @@ import type { Habit, HabitHistoryRecord, JournalEntry } from '@/api/types'
 export interface Db {
   journals: JournalEntry[]
   habits: Habit[]
-  history: Record<string, HabitHistoryRecord[]>
+  history: HabitHistoryRecord[]
+  /** "Today" as the fake server sees it: the real current day, so streaks line up with the app. */
+  today: string
   prompts: string[]
   tip: string
   feedback: string
+}
+
+/** "YYYY-MM-DD" for the local day `daysAgo` days before today. */
+export function dayKey(daysAgo: number): string {
+  const d = new Date()
+  d.setDate(d.getDate() - daysAgo)
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
 }
 
 function defaults(): Db {
@@ -38,8 +48,30 @@ function defaults(): Db {
         createdAt: '2026-10-28T21:05:00',
       },
     ],
-    habits: [],
-    history: {},
+    habits: [
+      { id: 'h1', habitName: 'Read 10 pages', description: 'Before bed', colour: '#A7C7E7', completed: false, habitType: 'standard' },
+      { id: 'h2', habitName: 'Morning run', description: '', colour: '#B4E197', completed: true, habitType: 'standard' },
+      {
+        id: 'h3',
+        habitName: '',
+        description: '',
+        colour: '#F8C8DC',
+        completed: false,
+        habitType: 'trigger-action',
+        trigger: 'pour my coffee',
+        action: 'write one line',
+      },
+    ],
+    // h1: done the last three days but not yet today (streak 3). h2: done today and yesterday (streak 2).
+    history: [
+      { habitId: 'h1', date: dayKey(1), completed: true },
+      { habitId: 'h1', date: dayKey(2), completed: true },
+      { habitId: 'h1', date: dayKey(3), completed: true },
+      { habitId: 'h1', date: dayKey(6), completed: true },
+      { habitId: 'h2', date: dayKey(0), completed: true },
+      { habitId: 'h2', date: dayKey(1), completed: true },
+    ],
+    today: dayKey(0),
     prompts: ['What drained you today?', 'What are you proud of this week?', 'What would make tomorrow easier?'],
     tip: 'Leave your journal on your pillow so you see it before bed.',
     feedback: 'It sounds like starting was the hard part. Try the **two-minute rule**: commit to just two minutes.',

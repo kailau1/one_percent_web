@@ -8,7 +8,7 @@ import { useTheme } from '@/lib/useTheme'
 
 function ThemedToaster() {
   const { theme } = useTheme()
-  return <Toaster theme={theme} position="bottom-right" closeButton />
+  return <Toaster theme={theme} position="bottom-center" closeButton />
 }
 
 /** Everything the pages rely on, in one place. Tests wrap components in the same providers. */

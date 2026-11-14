@@ -32,6 +32,8 @@
   --danger-wash: #fbe9e7;
   --warning-wash: #fdf3d9;
   --warning-line: #e6c878;
+  /* Text on a habit's own pastel colour: dark in both themes, because the pastels don't change. */
+  --on-habit: #17263a;
 }
 
 .dark {
@@ -74,6 +76,7 @@
   --color-danger-wash: var(--danger-wash);
   --color-warning-wash: var(--warning-wash);
   --color-warning-line: var(--warning-line);
+  --color-on-habit: var(--on-habit);
 
   /* Figtree for the interface; Literata (made for long reading) for entries and dates. */
   --font-sans: 'Figtree Variable', ui-sans-serif, system-ui, sans-serif;
@@ -174,4 +177,18 @@
 .feedback-prose a {
   color: var(--action);
   text-decoration: underline;
+}
+
+/* Ticking a habit: the tick strokes itself in. */
+@keyframes tick-draw {
+  from {
+    stroke-dashoffset: 1;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+.tick-draw {
+  stroke-dasharray: 1;
+  animation: tick-draw 0.25s ease-out both;
 }
