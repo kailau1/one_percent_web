@@ -226,6 +226,20 @@ describe('habit details', () => {
     expect(within(drawer).getByText('Done today')).toBeInTheDocument()
   })
 
+  it('returns keyboard focus to the habit when the drawer closes', async () => {
+    const { user } = renderRoutes(routes, { route: '/habits' })
+    await habitList()
+    const opener = screen.getByRole('button', { name: /^Read 10 pages.*open details$/ })
+
+    opener.focus()
+    await user.keyboard('{Enter}')
+    await screen.findByRole('dialog', { name: 'Read 10 pages' })
+    await user.keyboard('{Escape}')
+
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
+    await waitFor(() => expect(opener).toHaveFocus())
+  })
+
   it('deletes a habit after confirming', async () => {
     const { user } = renderRoutes(routes, { route: '/habits' })
     await habitList()

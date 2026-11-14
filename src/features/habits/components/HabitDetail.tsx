@@ -8,6 +8,7 @@ import { ErrorState } from '@/components/ErrorState'
 import { Button } from '@/components/ui/button'
 import { Dialog } from '@/components/ui/dialog'
 import { Skeleton } from '@/components/ui/skeleton'
+import { useReturnFocus } from '@/lib/useReturnFocus'
 import { habitTitle, safeColour } from '../habit'
 import { useDeleteHabit, useHabitHistory } from '../hooks'
 import { calculateCurrentStreak, calculateLongestStreak, withToday } from '../streaks'
@@ -39,6 +40,7 @@ export function HabitDetail({ habit, onClose, onToggle }: HabitDetailProps) {
   const deleteHabit = useDeleteHabit()
   const [editing, setEditing] = useState(false)
   const [confirmingDelete, setConfirmingDelete] = useState(false)
+  const returnFocus = useReturnFocus(habit !== null)
 
   function confirmDelete() {
     if (!habit) return
@@ -64,6 +66,7 @@ export function HabitDetail({ habit, onClose, onToggle }: HabitDetailProps) {
         <RadixDialog.Portal>
           <RadixDialog.Overlay className="fixed inset-0 z-40 bg-ink/40" />
           <RadixDialog.Content
+            onCloseAutoFocus={returnFocus}
             aria-describedby={undefined}
             className="fixed inset-y-0 right-0 z-50 flex w-[min(30rem,100vw)] flex-col gap-8 overflow-y-auto border-l border-line bg-surface p-6 sm:p-8"
           >

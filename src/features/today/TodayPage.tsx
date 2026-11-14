@@ -1,3 +1,4 @@
+import { useQueryClient } from '@tanstack/react-query'
 import { format } from 'date-fns'
 import { ArrowRight, PenLine } from 'lucide-react'
 import { useMemo, useState } from 'react'
@@ -32,6 +33,17 @@ export function TodayPage() {
   const entries = useEntries()
   const history = useRecentHistory()
   const toggle = useToggleHabit()
+  const queryClient = useQueryClient()
+
+  // When several things fail at once (typically: the server is unreachable) show ONE banner with
+  // ONE retry for the whole page, instead of an error and a button in every section.
+  const failed = [habits, entries, history].filter((query) => query.error)
+  const pageError = failed[0]?.error ?? null
+  const retrying = failed.some((query) => query.isFetching)
+  function retryAll() {
+    for (const query of failed) query.refetch()
+    queryClient.refetchQueries({ predicate: (query) => query.state.status === 'error' })
+  }
 
   const active = useMemo(
     () => activeDays(entries.data, history.data, habits.data, now),
@@ -55,13 +67,9 @@ export function TodayPage() {
         <h1 className="font-serif text-4xl font-medium tracking-tight sm:text-5xl">{format(now, 'EEEE d MMMM')}</h1>
       </header>
 
-      <div>
-        {/* Without history the ribbon would quietly under-count, so say so. */}
-        {history.error && !history.data && (
-          <ErrorState compact error={history.error} onRetry={() => history.refetch()} retrying={history.isFetching} className="mb-4 max-w-prose" />
-        )}
-        <YearRibbon active={active} today={now} />
-      </div>
+      {pageError && <ErrorState compact error={pageError} onRetry={retryAll} retrying={retrying} className="max-w-prose" />}
+
+      <YearRibbon active={active} today={now} unavailable={(Boolean(history.error) && !history.data) || (Boolean(entries.error) && !entries.data)} />
 
       <div className="grid gap-12 lg:grid-cols-2 lg:gap-16">
         <section aria-labelledby="today-habits" className="min-w-0">
@@ -86,9 +94,7 @@ export function TodayPage() {
               ))}
             </div>
           )}
-          {habits.error && (
-            <ErrorState compact error={habits.error} onRetry={() => habits.refetch()} retrying={habits.isFetching} className="mb-3 flex-wrap" />
-          )}
+          {habits.error && !habits.data && <p className="text-ink-muted">Not loaded.</p>}
           {habits.data && habits.data.length === 0 && (
             <p className="text-ink-muted">
               No habits yet.{' '}
@@ -138,9 +144,7 @@ export function TodayPage() {
               <Skeleton className="h-5 w-2/3" />
             </div>
           )}
-          {entries.error && (
-            <ErrorState compact error={entries.error} onRetry={() => entries.refetch()} retrying={entries.isFetching} className="flex-wrap" />
-          )}
+          {entries.error && !entries.data && <p className="text-ink-muted">Not loaded.</p>}
           {recentEntries.length > 0 && (
             <ul aria-label="Recent entries">
               {recentEntries.map((entry) => {
@@ -160,7 +164,7 @@ export function TodayPage() {
         </section>
       </div>
 
-      <TipCard />
+      <TipCard quietErrors={pageError !== null} />
     </div>
   )
 }

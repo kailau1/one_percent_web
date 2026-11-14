@@ -93,6 +93,35 @@ describe('Today', () => {
     expect(await screen.findByText(db.tip)).toBeInTheDocument()
   })
 
+  it('shows one banner and one retry for the whole page when the server is unreachable', async () => {
+    let down = true
+    const flaky = (path: string, ok: () => Response) =>
+      http.get(`${API}${path}`, () => (down ? HttpResponse.error() : ok()))
+    server.use(
+      flaky('/api/habits/me', () => HttpResponse.json(db.habits)),
+      flaky('/api/journals/me', () => HttpResponse.json(db.journals)),
+      flaky('/api/habit-history', () => HttpResponse.json(db.history)),
+      flaky('/api/ai/tip', () => HttpResponse.json({ response: db.tip })),
+    )
+    const { user } = renderRoutes(routes, { route: '/today' })
+
+    await screen.findByRole('alert')
+    await waitFor(() => expect(screen.getAllByText('Not loaded.').length).toBeGreaterThanOrEqual(3))
+    expect(screen.getAllByRole('alert')).toHaveLength(1)
+    expect(screen.getAllByRole('button', { name: 'Try again' })).toHaveLength(1)
+    // an outage must not read as "you've done nothing this year"
+    expect(screen.getByText('Your year so far isn’t loaded.')).toBeInTheDocument()
+    expect(screen.queryByText(/Every mark is a day/)).not.toBeInTheDocument()
+
+    down = false
+    await user.click(screen.getByRole('button', { name: 'Try again' }))
+
+    expect(await screen.findByRole('list', { name: 'Today’s habits' })).toBeInTheDocument()
+    expect(await screen.findByRole('list', { name: 'Recent entries' })).toBeInTheDocument()
+    expect(await screen.findByText(db.tip)).toBeInTheDocument()
+    await waitFor(() => expect(screen.queryByRole('alert')).not.toBeInTheDocument())
+  })
+
   it('opens a new entry with the N key from anywhere', async () => {
     const { user, router } = renderRoutes(routes, { route: '/today' })
     await year()

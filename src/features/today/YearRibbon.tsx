@@ -54,6 +54,8 @@ interface YearRibbonProps {
   /** Day numbers on which the user wrote or completed a habit (see activeDays). */
   active: Set<number>
   today: Date
+  /** The data behind the ribbon failed to load, so its marks can't be trusted. */
+  unavailable?: boolean
 }
 
 /**
@@ -61,7 +63,7 @@ interface YearRibbonProps {
  * is a taller mark, and the line underneath says what that many days compound to.
  * Wide screens show the whole year; narrow ones the last twelve weeks.
  */
-export function YearRibbon({ active, today }: YearRibbonProps) {
+export function YearRibbon({ active, today, unavailable = false }: YearRibbonProps) {
   const year = today.getFullYear()
   const todayNumber = toDayNumber(today)
 
@@ -86,12 +88,14 @@ export function YearRibbon({ active, today }: YearRibbonProps) {
 
   return (
     <section aria-label="Your year">
-      <div role="img" aria-label={`You showed up on ${activeSoFar} of ${daysSoFar} days so far this year`}>
+      <div role="img" aria-label={unavailable ? 'Your year so far isn’t loaded' : `You showed up on ${activeSoFar} of ${daysSoFar} days so far this year`}>
         <Strip className="hidden w-full sm:block" first={firstOfYear} count={daysInYear} today={todayNumber} active={active} labels={monthLabels} />
         <Strip className="w-full sm:hidden" first={recentFirst} count={84} today={todayNumber} active={active} labels={recentLabels} />
       </div>
       <p className="mt-4 max-w-prose font-serif text-xl leading-8">
-        {activeSoFar === 0 ? (
+        {unavailable ? (
+          <span className="text-ink-muted">Your year so far isn’t loaded.</span>
+        ) : activeSoFar === 0 ? (
           'Every mark is a day. Write an entry or tick a habit to make today’s the first tall one.'
         ) : (
           <>

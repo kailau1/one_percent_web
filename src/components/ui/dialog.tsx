@@ -1,5 +1,6 @@
 import * as RadixDialog from '@radix-ui/react-dialog'
 import type { ReactNode } from 'react'
+import { useReturnFocus } from '@/lib/useReturnFocus'
 
 interface DialogProps {
   open: boolean
@@ -14,11 +15,13 @@ interface DialogProps {
 
 /** A centred modal for decisions. Focus is trapped inside and Escape closes it (via Radix). */
 export function Dialog({ open, onOpenChange, title, description, actions, children }: DialogProps) {
+  const returnFocus = useReturnFocus(open)
   return (
     <RadixDialog.Root open={open} onOpenChange={onOpenChange}>
       <RadixDialog.Portal>
         <RadixDialog.Overlay className="fixed inset-0 z-40 bg-ink/40" />
         <RadixDialog.Content
+          onCloseAutoFocus={returnFocus}
           {...(description ? {} : { 'aria-describedby': undefined })}
           className="fixed left-1/2 top-1/2 z-50 w-[min(28rem,calc(100vw-2rem))] -translate-x-1/2 -translate-y-1/2 rounded-panel border border-line bg-surface p-6 shadow-xl"
         >
