@@ -25,7 +25,7 @@ export function HabitRow({ habit, streak, onToggle, onOpen }: HabitRowProps) {
       <button type="button" onClick={onOpen} className="group flex min-w-0 flex-1 items-center gap-3 rounded-control text-left">
         <span className="min-w-0 flex-1">
           <span className={cn('block truncate font-serif text-lg', habit.completed && 'text-ink-muted')}>
-            <HabitTitle habit={habit} />
+            <HabitTitle habit={habit} muted={habit.completed} />
           </span>
           {habit.habitType === 'standard' && habit.description && (
             <span className="block truncate text-sm text-ink-muted">{habit.description}</span>

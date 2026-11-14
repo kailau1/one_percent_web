@@ -116,7 +116,7 @@ export function TodayPage() {
                       colour={safeColour(habit.colour)}
                     />
                     <span className={cn('min-w-0 flex-1 truncate font-serif text-lg', habit.completed && 'text-ink-muted')}>
-                      <HabitTitle habit={habit} />
+                      <HabitTitle habit={habit} muted={habit.completed} />
                     </span>
                   </li>
                 ))}

@@ -31,8 +31,17 @@ describe('habit list', () => {
     renderRoutes(routes, { route: '/habits' })
 
     const list = await habitList()
-    expect(within(list).getByText('When I')).toHaveClass('font-semibold')
-    expect(within(list).getByText('I will')).toHaveClass('font-semibold')
+    expect(within(list).getByText('When I')).toHaveClass('font-semibold', 'text-ink-strong')
+    expect(within(list).getByText('I will')).toHaveClass('font-semibold', 'text-ink-strong')
+  })
+
+  it('dims "When I" and "I will" with the rest once the habit is done today', async () => {
+    db.habits.find((h) => h.id === 'h3')!.completed = true
+    renderRoutes(routes, { route: '/habits' })
+
+    const list = await habitList()
+    expect(within(list).getByText('When I')).not.toHaveClass('text-ink-strong')
+    expect(within(list).getByText('I will')).not.toHaveClass('text-ink-strong')
   })
 
   it('shows trigger → action habits saved with capitals in lower case', async () => {
