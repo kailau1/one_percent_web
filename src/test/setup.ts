@@ -1,6 +1,7 @@
 import '@testing-library/jest-dom/vitest'
 import { cleanup } from '@testing-library/react'
 import { afterAll, afterEach, beforeAll } from 'vitest'
+import { resetDb } from './msw/db'
 import { server } from './msw/server'
 
 // Any request a test doesn't explicitly mock is a mistake: fail loudly rather than hit a real server.
@@ -9,6 +10,7 @@ beforeAll(() => server.listen({ onUnhandledFrame: 'error' }))
 afterEach(() => {
   cleanup()
   server.resetHandlers()
+  resetDb()
   localStorage.clear()
   document.documentElement.classList.remove('dark')
 })

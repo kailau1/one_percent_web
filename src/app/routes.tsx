@@ -5,7 +5,10 @@ import { LoginPage } from '@/features/auth/LoginPage'
 import { PublicOnly, RequireAuth } from '@/features/auth/RequireAuth'
 import { SignupPage } from '@/features/auth/SignupPage'
 import { HabitsPage } from '@/features/habits/HabitsPage'
-import { JournalPage } from '@/features/journal/JournalPage'
+import { EntryPage } from '@/features/journal/EntryPage'
+import { JournalIndex } from '@/features/journal/JournalIndex'
+import { JournalLayout } from '@/features/journal/JournalLayout'
+import { NewEntryPage } from '@/features/journal/NewEntryPage'
 import { TodayPage } from '@/features/today/TodayPage'
 import { NotFoundPage } from './NotFoundPage'
 
@@ -26,7 +29,15 @@ export const routes: RouteObject[] = [
         children: [
           { index: true, element: <Navigate to="/today" replace /> },
           { path: 'today', element: <TodayPage /> },
-          { path: 'journal', element: <JournalPage /> },
+          {
+            path: 'journal',
+            element: <JournalLayout />,
+            children: [
+              { index: true, element: <JournalIndex /> },
+              { path: 'new', element: <NewEntryPage /> },
+              { path: ':id', element: <EntryPage /> },
+            ],
+          },
           { path: 'habits', element: <HabitsPage /> },
           { path: 'account', element: <AccountPage /> },
           { path: '*', element: <NotFoundPage /> },

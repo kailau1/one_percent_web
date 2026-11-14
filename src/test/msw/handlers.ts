@@ -1,5 +1,7 @@
 import { http, HttpResponse, type RequestHandler } from 'msw'
+import type { JournalEntry } from '@/api/types'
 import { makeToken, testUser } from '../auth'
+import { db, newId } from './db'
 
 export const API = 'http://api.test'
 
@@ -29,5 +31,40 @@ export const handlers: RequestHandler[] = [
       { id: testUser.id, email: body.email, firstName: body.firstName, lastName: body.lastName },
       { status: 201 },
     )
+  }),
+
+  // JournalController. Every route answers 401 without a token on the real server; tests that
+  // care about that override the route. Not-yours and not-found are both 404 with a text body.
+  http.get(`${API}/api/journals/me`, () => HttpResponse.json(db.journals)),
+
+  http.post(`${API}/api/journals`, async ({ request }) => {
+    const body = (await request.json()) as Partial<JournalEntry>
+    const created: JournalEntry = {
+      id: newId('j'),
+      title: body.title ?? '',
+      content: body.content ?? '',
+      llmResponse: body.llmResponse ?? null,
+      createdAt: '2026-11-14T09:30:00.5',
+    }
+    db.journals = [...db.journals, created]
+    return HttpResponse.json(created)
+  }),
+
+  http.put(`${API}/api/journals/entry`, async ({ request }) => {
+    const body = (await request.json()) as JournalEntry
+    const existing = db.journals.find((j) => j.id === body.id)
+    if (!existing) return new HttpResponse(`Journal entry not found: ${body.id}`, { status: 404 })
+    // like the real service: title, content and llmResponse are all overwritten
+    const updated = { ...existing, title: body.title, content: body.content, llmResponse: body.llmResponse ?? null }
+    db.journals = db.journals.map((j) => (j.id === updated.id ? updated : j))
+    return HttpResponse.json(updated)
+  }),
+
+  http.delete(`${API}/api/journals/:id`, ({ params }) => {
+    if (!db.journals.some((j) => j.id === params.id)) {
+      return new HttpResponse(`Journal entry not found: ${params.id}`, { status: 404 })
+    }
+    db.journals = db.journals.filter((j) => j.id !== params.id)
+    return new HttpResponse(null, { status: 204 })
   }),
 ]
