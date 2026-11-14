@@ -67,4 +67,23 @@ export const handlers: RequestHandler[] = [
     db.journals = db.journals.filter((j) => j.id !== params.id)
     return new HttpResponse(null, { status: 204 })
   }),
+
+  // AiController.getAiFeedback: 200 { response }. For a saved entry the server reads the stored
+  // text and stores the feedback on the entry; 404 if the entry isn't yours.
+  http.post(`${API}/api/ai/feedback`, async ({ request }) => {
+    const { journalId } = (await request.json()) as { journalId?: string | null }
+    if (journalId) {
+      if (!db.journals.some((j) => j.id === journalId)) {
+        return new HttpResponse(`Journal entry not found: ${journalId}`, { status: 404 })
+      }
+      db.journals = db.journals.map((j) => (j.id === journalId ? { ...j, llmResponse: db.feedback } : j))
+    }
+    return HttpResponse.json({ response: db.feedback })
+  }),
+
+  // PromptController.getMyPrompts: 200 string[]
+  http.get(`${API}/api/ai/prompt`, () => HttpResponse.json(db.prompts)),
+
+  // AiController.getTipOfTheDay: 200 { response }
+  http.get(`${API}/api/ai/tip`, () => HttpResponse.json({ response: db.tip })),
 ]

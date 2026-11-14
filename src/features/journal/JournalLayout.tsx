@@ -37,10 +37,10 @@ export function JournalLayout() {
     <div className="flex h-full min-h-0 lg:h-dvh">
       <section
         aria-label="Journal entries"
-        className={cn('w-full shrink-0 flex-col border-line lg:flex lg:w-[22rem] lg:border-r', atIndex ? 'flex' : 'hidden')}
+        className={cn('w-full shrink-0 flex-col border-line lg:flex lg:w-72 lg:border-r', atIndex ? 'flex' : 'hidden')}
       >
-        <div className="flex items-end justify-between gap-4 px-5 pb-5 pt-8 lg:pt-12">
-          <h1 className="font-serif text-4xl font-medium tracking-tight">Journal</h1>
+        <div className="flex items-center justify-between gap-3 px-5 pb-5 pt-8 lg:pt-12">
+          <h1 className="font-serif text-4xl font-medium tracking-tight lg:text-3xl">Journal</h1>
           <Button asChild size="sm">
             <Link to="/journal/new" title="New entry (N)">
               <Plus aria-hidden />

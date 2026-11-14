@@ -153,3 +153,25 @@
   background: var(--sunken);
   color: var(--ink);
 }
+
+/* Markdown from the AI: just paragraphs, emphasis and the odd list. */
+.feedback-prose > * + * {
+  margin-top: 0.75rem;
+}
+.feedback-prose strong {
+  font-weight: 600;
+}
+.feedback-prose ul,
+.feedback-prose ol {
+  padding-left: 1.25rem;
+}
+.feedback-prose ul {
+  list-style: disc;
+}
+.feedback-prose ol {
+  list-style: decimal;
+}
+.feedback-prose a {
+  color: var(--action);
+  text-decoration: underline;
+}
