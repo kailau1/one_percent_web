@@ -33,12 +33,13 @@ describe('journal list', () => {
 
     await user.type(screen.getByRole('searchbox', { name: 'Search entries' }), 'clear-headed')
 
+    expect(await screen.findByText('1 entry matches “clear-headed”')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: /Good run/ })).toBeInTheDocument()
     expect(screen.queryByRole('link', { name: /A slow start/ })).not.toBeInTheDocument()
 
     await user.clear(screen.getByRole('searchbox'))
     await user.type(screen.getByRole('searchbox'), 'zebra')
-    expect(screen.getByText(/No entries match “zebra”/)).toBeInTheDocument()
+    expect(await screen.findByText(/No entries match “zebra”/)).toBeInTheDocument()
   })
 
   it('invites a first entry when the journal is empty', async () => {
@@ -50,7 +51,7 @@ describe('journal list', () => {
   })
 
   it("shows a retry when the server can't be reached, and recovers", async () => {
-    server.use(http.get(`${API}/api/journals/me`, () => HttpResponse.error(), { once: true }))
+    server.use(http.get(`${API}/api/journals`, () => HttpResponse.error(), { once: true }))
     const { user } = renderRoutes(routes, { route: '/journal' })
 
     expect(await screen.findByRole('alert')).toHaveTextContent(/can't reach/i)
@@ -60,6 +61,66 @@ describe('journal list', () => {
 
     expect(await screen.findByRole('link', { name: /A slow start/ })).toBeInTheDocument()
     expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+  })
+})
+
+describe('a long journal', () => {
+  // 45 entries, one a day going back from 1 Nov; the oldest mentions a lighthouse
+  function longJournal() {
+    db.journals = Array.from({ length: 45 }, (_, i) => ({
+      id: `long${i}`,
+      title: `Day ${45 - i}`,
+      content: i === 44 ? 'Walked out to the lighthouse.' : 'An ordinary day.',
+      llmResponse: null,
+      createdAt: new Date(Date.UTC(2026, 10, 1 - i, 9)).toISOString(),
+    }))
+  }
+
+  it('loads a page at a time, with a button for older entries', async () => {
+    longJournal()
+    const { user } = renderRoutes(routes, { route: '/journal' })
+
+    const entries = await list()
+    expect(within(entries).getAllByRole('link')).toHaveLength(20)
+
+    await user.click(within(entries).getByRole('button', { name: 'Older entries' }))
+    await waitFor(() => expect(within(entries).getAllByRole('link')).toHaveLength(40))
+
+    await user.click(within(entries).getByRole('button', { name: 'Older entries' }))
+    await waitFor(() => expect(within(entries).getAllByRole('link')).toHaveLength(45))
+    expect(within(entries).queryByRole('button', { name: 'Older entries' })).not.toBeInTheDocument()
+    expect(within(entries).getAllByRole('link').at(-1)).toHaveTextContent('Day 1')
+  })
+
+  it('searches every entry on the server, not just the loaded page', async () => {
+    longJournal()
+    const { user } = renderRoutes(routes, { route: '/journal' })
+    await list()
+    expect(screen.queryByRole('link', { name: /^Day 1(?!\d)/ })).not.toBeInTheDocument()
+
+    await user.type(screen.getByRole('searchbox', { name: 'Search entries' }), 'lighthouse')
+
+    expect(await screen.findByText('1 entry matches “lighthouse”')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /^Day 1(?!\d)/ })).toBeInTheDocument()
+  })
+
+  it('opens an entry that is not on a loaded page', async () => {
+    longJournal()
+    renderRoutes(routes, { route: '/journal/long44' })
+
+    expect(await screen.findByDisplayValue('Walked out to the lighthouse.')).toBeInTheDocument()
+  })
+
+  it('a new entry appears at the top of the list', async () => {
+    longJournal()
+    const { user } = renderRoutes(routes, { route: '/journal/new' })
+
+    await user.type(await screen.findByRole('textbox', { name: 'Title' }), 'Fresh thoughts')
+    await user.type(screen.getByRole('textbox', { name: 'Entry' }), 'Something new.')
+    await user.click(screen.getByRole('button', { name: 'Save entry' }))
+
+    const entries = await list()
+    await waitFor(() => expect(within(entries).getAllByRole('link')[0]).toHaveTextContent('Fresh thoughts'))
   })
 })
 

@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { format } from 'date-fns'
 import { useState } from 'react'
 import type { JournalEntry } from '@/api/types'
-import { journalKeys } from '@/features/journal/hooks'
+import { entryChanged, journalKeys } from '@/features/journal/hooks'
 import { storage } from '@/lib/storage'
 import { getPrompts, getTip, requestFeedback } from './api'
 
@@ -17,9 +17,8 @@ export function useRequestFeedback() {
   return useMutation({
     mutationFn: requestFeedback,
     onSuccess: (feedback, journalId) => {
-      queryClient.setQueryData<JournalEntry[]>(journalKeys.all, (entries = []) =>
-        entries.map((entry) => (entry.id === journalId ? { ...entry, llmResponse: feedback } : entry)),
-      )
+      const entry = queryClient.getQueryData<JournalEntry>(journalKeys.entry(journalId))
+      if (entry) entryChanged(queryClient, { ...entry, llmResponse: feedback })
     },
   })
 }

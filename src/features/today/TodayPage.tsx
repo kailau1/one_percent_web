@@ -1,5 +1,5 @@
 import { useQueryClient } from '@tanstack/react-query'
-import { format } from 'date-fns'
+import { format, startOfYear } from 'date-fns'
 import { ArrowRight, PenLine } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router'
@@ -13,7 +13,7 @@ import { HabitToggle } from '@/features/habits/components/HabitToggle'
 import { habitTitle, safeColour } from '@/features/habits/habit'
 import { useHabits, useRecentHistory, useToggleHabit } from '@/features/habits/hooks'
 import { toDayNumber } from '@/features/habits/streaks'
-import { useEntries } from '@/features/journal/hooks'
+import { useEntryDays, useRecentEntries } from '@/features/journal/hooks'
 import { cn } from '@/lib/cn'
 import { formatDay, parseDateTime } from '@/lib/dates'
 import { activeDays } from './activity'
@@ -31,14 +31,16 @@ export function TodayPage() {
   const user = useUser()
   const [now] = useState(() => new Date())
   const habits = useHabits()
-  const entries = useEntries()
+  const entries = useRecentEntries(3)
+  // which days this year had an entry, without downloading the entries themselves
+  const entryDays = useEntryDays(format(startOfYear(now), 'yyyy-MM-dd'), format(now, 'yyyy-MM-dd'))
   const history = useRecentHistory()
   const toggle = useToggleHabit()
   const queryClient = useQueryClient()
 
   // When several things fail at once (typically: the server is unreachable) show ONE banner with
   // ONE retry for the whole page, instead of an error and a button in every section.
-  const failed = [habits, entries, history].filter((query) => query.error)
+  const failed = [habits, entries, entryDays, history].filter((query) => query.error)
   const pageError = failed[0]?.error ?? null
   const retrying = failed.some((query) => query.isFetching)
   function retryAll() {
@@ -47,16 +49,15 @@ export function TodayPage() {
   }
 
   const active = useMemo(
-    () => activeDays(entries.data, history.data, habits.data, now),
-    [entries.data, history.data, habits.data, now],
+    () => activeDays(entryDays.data, history.data, habits.data, now),
+    [entryDays.data, history.data, habits.data, now],
   )
 
-  const todayNumber = toDayNumber(now)
-  const todaysEntry = entries.data?.find((entry) => {
-    const written = parseDateTime(entry.createdAt)
-    return written !== null && toDayNumber(written) === todayNumber
-  })
-  const recentEntries = entries.data?.slice(0, 3) ?? []
+  const recentEntries = entries.data?.items ?? []
+  // entries come newest first, so if one was written today it's the first
+  const newest = recentEntries[0]
+  const newestWritten = parseDateTime(newest?.createdAt)
+  const todaysEntry = newestWritten && toDayNumber(newestWritten) === toDayNumber(now) ? newest : undefined
   const doneCount = habits.data?.filter((habit) => habit.completed).length ?? 0
 
   return (
@@ -70,7 +71,7 @@ export function TodayPage() {
 
       {pageError && <ErrorState compact error={pageError} onRetry={retryAll} retrying={retrying} className="max-w-prose" />}
 
-      <YearRibbon active={active} today={now} unavailable={(Boolean(history.error) && !history.data) || (Boolean(entries.error) && !entries.data)} />
+      <YearRibbon active={active} today={now} unavailable={(Boolean(history.error) && !history.data) || (Boolean(entryDays.error) && !entryDays.data)} />
 
       <div className="grid gap-12 lg:grid-cols-2 lg:gap-16">
         <section aria-labelledby="today-habits" className="min-w-0">
@@ -163,7 +164,7 @@ export function TodayPage() {
               })}
             </ul>
           )}
-          {entries.data && entries.data.length === 0 && <p className="text-ink-muted">Nothing written yet. The first entry is the hardest; keep it short.</p>}
+          {entries.data && entries.data.totalItems === 0 && <p className="text-ink-muted">Nothing written yet. The first entry is the hardest; keep it short.</p>}
         </section>
       </div>
 

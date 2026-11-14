@@ -99,7 +99,8 @@ describe('Today', () => {
       http.get(`${API}${path}`, () => (down ? HttpResponse.error() : ok()))
     server.use(
       flaky('/api/habits/me', () => HttpResponse.json(db.habits)),
-      flaky('/api/journals/me', () => HttpResponse.json(db.journals)),
+      flaky('/api/journals', () => HttpResponse.json({ items: db.journals.slice(0, 3), page: 0, size: 3, totalItems: db.journals.length, totalPages: 1, hasNext: false })),
+      flaky('/api/journals/days', () => HttpResponse.json([])),
       flaky('/api/habit-history', () => HttpResponse.json(db.history)),
       flaky('/api/ai/tip', () => HttpResponse.json({ response: db.tip })),
     )

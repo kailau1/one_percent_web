@@ -1,7 +1,12 @@
+import { format } from 'date-fns'
 import { http, HttpResponse, type RequestHandler } from 'msw'
 import type { Habit, JournalEntry } from '@/api/types'
+import { parseDateTime } from '@/lib/dates'
 import { makeToken, testUser } from '../auth'
 import { db, newId } from './db'
+
+const newestFirst = (entries: JournalEntry[]) =>
+  [...entries].sort((a, b) => (parseDateTime(b.createdAt)?.getTime() ?? 0) - (parseDateTime(a.createdAt)?.getTime() ?? 0))
 
 export const API = 'http://api.test'
 
@@ -49,6 +54,51 @@ export const handlers: RequestHandler[] = [
   // JournalController. Every route answers 401 without a token on the real server; tests that
   // care about that override the route. Not-yours and not-found are both 404 with a text body.
   http.get(`${API}/api/journals/me`, () => HttpResponse.json(db.journals)),
+
+  // GET /api/journals?q=&page=&size=: newest first; q matches title or text, case-insensitively.
+  // 400 for a bad page or size (1-100) or search text over 200 characters.
+  http.get(`${API}/api/journals`, ({ request }) => {
+    const params = new URL(request.url).searchParams
+    const page = Number(params.get('page') ?? 0)
+    const size = Number(params.get('size') ?? 20)
+    const q = (params.get('q') ?? '').trim().toLowerCase()
+    if (!Number.isInteger(page) || page < 0) return new HttpResponse("'page' can't be negative.", { status: 400 })
+    if (!Number.isInteger(size) || size < 1 || size > 100) return new HttpResponse("'size' must be between 1 and 100.", { status: 400 })
+    if (q.length > 200) return new HttpResponse('Search text can be at most 200 characters.', { status: 400 })
+    const matching = newestFirst(db.journals).filter(
+      (entry) => !q || entry.title?.toLowerCase().includes(q) || entry.content?.toLowerCase().includes(q),
+    )
+    const totalPages = Math.ceil(matching.length / size)
+    return HttpResponse.json({
+      items: matching.slice(page * size, (page + 1) * size),
+      page,
+      size,
+      totalItems: matching.length,
+      totalPages,
+      hasNext: page + 1 < totalPages,
+    })
+  }),
+
+  // GET /api/journals/days?from=&to=: "YYYY-MM-DD" days (the user's zone; tests run in it) with an entry
+  http.get(`${API}/api/journals/days`, ({ request }) => {
+    const params = new URL(request.url).searchParams
+    const from = params.get('from') ?? '0000-00-00'
+    const to = params.get('to') ?? '9999-99-99'
+    const days = new Set(
+      db.journals
+        .map((entry) => parseDateTime(entry.createdAt))
+        .filter((date): date is Date => date !== null)
+        .map((date) => format(date, 'yyyy-MM-dd'))
+        .filter((day) => day >= from && day <= to),
+    )
+    return HttpResponse.json([...days].sort())
+  }),
+
+  http.get(`${API}/api/journals/entry/:id`, ({ params }) => {
+    const entry = db.journals.find((j) => j.id === params.id)
+    if (!entry) return new HttpResponse(`Journal entry not found: ${params.id}`, { status: 404 })
+    return HttpResponse.json(entry)
+  }),
 
   http.post(`${API}/api/journals`, async ({ request }) => {
     const body = (await request.json()) as Partial<JournalEntry>
