@@ -33,12 +33,13 @@ export const handlers: RequestHandler[] = [
     )
   }),
 
-  // UserController profile routes. The zone must be an IANA region ID (fixed offsets are 400 too).
+  // UserController profile routes. The zone must be an IANA region ID ("UTC" too); anything else,
+  // including fixed offsets like "-04:00", is a 400. Intl's list stands in for Java's, which is near enough.
   http.get(`${API}/api/users/me`, () => HttpResponse.json(db.profile)),
 
   http.put(`${API}/api/users/me/time-zone`, async ({ request }) => {
     const { timeZone } = (await request.json()) as { timeZone?: string }
-    if (!timeZone || !/^[A-Za-z_]+(\/[A-Za-z0-9_+-]+)*$/.test(timeZone) || timeZone === 'Mars/Olympus') {
+    if (!timeZone || !(timeZone === 'UTC' || Intl.supportedValuesOf('timeZone').includes(timeZone))) {
       return new HttpResponse('That isn\u2019t a time zone we recognise, e.g. "Europe/London".', { status: 400 })
     }
     db.profile = { ...db.profile, timeZone }

@@ -13,6 +13,7 @@ describe('parseDateTime', () => {
   it('applies an explicit offset', () => {
     expect(parseDateTime('2026-11-14T09:30:00-05:00')!.toISOString()).toBe('2026-11-14T14:30:00.000Z')
     expect(parseDateTime('2026-11-14T09:30:00+0530')!.toISOString()).toBe('2026-11-14T04:00:00.000Z')
+    expect(parseDateTime('2026-11-14T09:30:00+05')!.toISOString()).toBe('2026-11-14T04:30:00.000Z')
   })
 
   it('puts a late-evening UTC entry on the right local day', () => {
@@ -39,6 +40,9 @@ describe('parseDateTime', () => {
     expect(parseDateTime(undefined)).toBeNull()
     expect(parseDateTime('')).toBeNull()
     expect(parseDateTime('yesterday-ish')).toBeNull()
+    // an offset it can't read is an error, not something to quietly read as local time
+    expect(parseDateTime('2026-11-14T09:30:00+05:30:00')).toBeNull()
+    expect(parseDateTime('2026-11-14T09:30:00 EST')).toBeNull()
   })
 })
 

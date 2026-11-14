@@ -10,14 +10,14 @@ import { format, isSameYear, isToday, isYesterday } from 'date-fns'
 export function parseDateTime(value: string | null | undefined): Date | null {
   if (!value) return null
   const match =
-    /^(\d{4})-(\d{2})-(\d{2})(?:[T ](\d{2}):(\d{2})(?::(\d{2})(?:\.(\d+))?)?)?(Z|[+-]\d{2}:?\d{2})?/i.exec(value.trim())
+    /^(\d{4})-(\d{2})-(\d{2})(?:[T ](\d{2}):(\d{2})(?::(\d{2})(?:\.(\d+))?)?)?(Z|[+-]\d{2}(?::?\d{2})?)?$/i.exec(value.trim())
   if (!match) return null
   const [, year, month, day, hour = '0', minute = '0', second = '0', fraction = '', zone] = match
   const parts = [Number(year), Number(month) - 1, Number(day), Number(hour), Number(minute), Number(second), Number(fraction.padEnd(3, '0').slice(0, 3))] as const
   let date: Date
   if (zone) {
-    const offset = /^([+-])(\d{2}):?(\d{2})$/.exec(zone)
-    const offsetMinutes = offset ? (offset[1] === '-' ? -1 : 1) * (Number(offset[2]) * 60 + Number(offset[3])) : 0
+    const offset = /^([+-])(\d{2}):?(\d{2})?$/.exec(zone)
+    const offsetMinutes = offset ? (offset[1] === '-' ? -1 : 1) * (Number(offset[2]) * 60 + Number(offset[3] ?? 0)) : 0
     date = new Date(Date.UTC(...parts) - offsetMinutes * 60_000)
   } else {
     date = new Date(...parts)
