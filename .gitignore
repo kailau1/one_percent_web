@@ -27,3 +27,7 @@ dist-ssr
 .env
 .env.local
 coverage
+
+# browser-check screenshots
+e2e/shots
+e2e/node_modules
