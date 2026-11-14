@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useEffect } from 'react'
-import { useForm, useWatch } from 'react-hook-form'
+import { useForm, useWatch, type UseFormRegisterReturn } from 'react-hook-form'
 import { z } from 'zod'
 import { getErrorMessage } from '@/api/client'
 import type { Habit } from '@/api/types'
@@ -16,8 +16,9 @@ const schema = z
     habitType: z.enum(['standard', 'trigger-action']),
     habitName: z.string().trim(),
     description: z.string().trim(),
-    trigger: z.string().trim(),
-    action: z.string().trim(),
+    // lower case: these sit mid-sentence ("When I pour my coffee, I will …")
+    trigger: z.string().trim().toLowerCase(),
+    action: z.string().trim().toLowerCase(),
     colour: z.string(),
   })
   .superRefine((values, context) => {
@@ -38,9 +39,26 @@ function valuesFor(habit: Habit | undefined): FormValues {
     habitType: habit?.habitType ?? 'standard',
     habitName: habit?.habitName ?? '',
     description: habit?.description ?? '',
-    trigger: habit?.trigger ?? '',
-    action: habit?.action ?? '',
+    trigger: habit?.trigger?.toLowerCase() ?? '',
+    action: habit?.action?.toLowerCase() ?? '',
     colour: safeColour(habit?.colour ?? DEFAULT_COLOUR),
+  }
+}
+
+/** Lower-cases a text box as the user types, keeping the cursor where it was. */
+function lowercased(registration: UseFormRegisterReturn): UseFormRegisterReturn {
+  return {
+    ...registration,
+    onChange: (event) => {
+      const input = event.target as HTMLInputElement
+      const lower = input.value.toLowerCase()
+      if (lower !== input.value) {
+        const { selectionStart, selectionEnd } = input
+        input.value = lower
+        input.setSelectionRange(selectionStart, selectionEnd)
+      }
+      return registration.onChange(event)
+    },
   }
 }
 
@@ -141,8 +159,8 @@ export function HabitFormDialog({ open, onOpenChange, habit }: HabitFormDialogPr
           </>
         ) : (
           <>
-            <Field label="When I…" placeholder="pour my morning coffee" error={errors.trigger?.message} {...register('trigger')} />
-            <Field label="I will…" placeholder="write one line in my journal" error={errors.action?.message} {...register('action')} />
+            <Field label="When I…" placeholder="pour my morning coffee" error={errors.trigger?.message} {...lowercased(register('trigger'))} />
+            <Field label="I will…" placeholder="write one line in my journal" error={errors.action?.message} {...lowercased(register('action'))} />
           </>
         )}
 
