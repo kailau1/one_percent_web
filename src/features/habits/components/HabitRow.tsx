@@ -20,7 +20,8 @@ export function HabitRow({ habit, streak, onToggle, onOpen }: HabitRowProps) {
     <li className="flex items-center gap-4 border-b border-line py-3.5 last:border-b-0">
       <HabitToggle checked={habit.completed} onChange={onToggle} label={title} colour={safeColour(habit.colour)} />
 
-      <button type="button" onClick={onOpen} className="group flex min-w-0 flex-1 items-center gap-3 rounded-control text-left" aria-label={`${title}: details`}>
+      {/* No aria-label: the accessible name must contain the visible text (voice control says what it sees). */}
+      <button type="button" onClick={onOpen} className="group flex min-w-0 flex-1 items-center gap-3 rounded-control text-left">
         <span className="min-w-0 flex-1">
           <span className={cn('block truncate font-serif text-lg', habit.completed && 'text-ink-muted')}>{title}</span>
           {habit.habitType === 'standard' && habit.description && (
@@ -31,9 +32,11 @@ export function HabitRow({ habit, streak, onToggle, onOpen }: HabitRowProps) {
         {streak > 0 && (
           <span className="flex shrink-0 items-center gap-1 rounded-full bg-sunrise-wash px-2.5 py-1 text-sm font-medium" title="Current streak">
             <Flame aria-hidden className="size-3.5 text-sunrise" />
+            <span className="sr-only">, streak</span>
             {streak} {streak === 1 ? 'day' : 'days'}
           </span>
         )}
+        <span className="sr-only">, open details</span>
         <ChevronRight aria-hidden className="size-4 shrink-0 text-ink-faint transition-transform group-hover:translate-x-0.5" />
       </button>
     </li>

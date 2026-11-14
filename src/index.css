@@ -192,3 +192,16 @@
   stroke-dasharray: 1;
   animation: tick-draw 0.25s ease-out both;
 }
+
+/* The year ribbon's marks rise into place once when Today loads. */
+@keyframes ribbon-rise {
+  from {
+    transform: scaleY(0.2);
+    opacity: 0;
+  }
+}
+.ribbon-mark {
+  transform-box: fill-box;
+  transform-origin: bottom;
+  animation: ribbon-rise 0.5s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}

@@ -1,11 +1,10 @@
 import { Plus } from 'lucide-react'
-import { Link, Outlet, useMatch, useNavigate } from 'react-router'
+import { Link, Outlet, useMatch } from 'react-router'
 import { EmptyState } from '@/components/EmptyState'
 import { ErrorState } from '@/components/ErrorState'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { cn } from '@/lib/cn'
-import { useShortcut } from '@/lib/useShortcut'
 import { EntryList } from './components/EntryList'
 import { useEntries } from './hooks'
 
@@ -29,9 +28,6 @@ function ListSkeleton() {
 export function JournalLayout() {
   const { data: entries, error, isPending, refetch, isFetching } = useEntries()
   const atIndex = useMatch('/journal') !== null
-  const navigate = useNavigate()
-
-  useShortcut('n', () => navigate('/journal/new'))
 
   return (
     <div className="flex h-full min-h-0 lg:h-dvh">

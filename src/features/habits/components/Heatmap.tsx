@@ -39,7 +39,7 @@ export function Heatmap({ history, colour, weeks = 18, today }: HeatmapProps) {
   return (
     <figure>
       <div className="flex gap-2" role="img" aria-label={`Done on ${doneCount} of the last ${dayCount} days`}>
-        <div className="grid grid-rows-7 gap-1 text-xs text-ink-faint" aria-hidden>
+        <div className="grid grid-rows-7 gap-1 text-xs text-ink-muted" aria-hidden>
           {WEEKDAY_LABELS.map((label, index) => (
             <span key={index} className="flex h-3.5 items-center">
               {label}

@@ -1,9 +1,10 @@
 import * as Dialog from '@radix-ui/react-dialog'
 import { Menu, X } from 'lucide-react'
 import { useState } from 'react'
-import { Outlet } from 'react-router'
+import { Outlet, useNavigate } from 'react-router'
 import { OfflineBanner } from '@/components/OfflineBanner'
 import { Button } from '@/components/ui/button'
+import { useShortcut } from '@/lib/useShortcut'
 import { Sidebar, Wordmark } from './Sidebar'
 
 /**
@@ -12,6 +13,10 @@ import { Sidebar, Wordmark } from './Sidebar'
  */
 export function AppShell() {
   const [menuOpen, setMenuOpen] = useState(false)
+  const navigate = useNavigate()
+
+  // N starts a new journal entry from anywhere (ignored while typing in a field).
+  useShortcut('n', () => navigate('/journal/new'))
 
   return (
     <div className="flex min-h-dvh flex-col lg:flex-row">

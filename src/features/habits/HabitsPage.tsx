@@ -13,7 +13,7 @@ import { calculateCurrentStreak, withToday } from './streaks'
 
 export function HabitsPage() {
   const { data: habits, error, isPending, refetch, isFetching } = useHabits()
-  const { data: history } = useRecentHistory()
+  const { data: history, error: historyError, refetch: refetchHistory, isFetching: historyFetching } = useRecentHistory()
   const toggle = useToggleHabit()
   const [adding, setAdding] = useState(false)
   const [openId, setOpenId] = useState<string | null>(null)
@@ -54,6 +54,11 @@ export function HabitsPage() {
       )}
 
       {error && <ErrorState compact={Boolean(habits)} error={error} onRetry={() => refetch()} retrying={isFetching} className="mb-6" />}
+
+      {/* Without history the streak badges would quietly be wrong, so say so. */}
+      {historyError && !history && habits && habits.length > 0 && (
+        <ErrorState compact error={historyError} onRetry={() => refetchHistory()} retrying={historyFetching} className="mb-6" />
+      )}
 
       {habits && habits.length === 0 && (
         <EmptyState title="No habits yet" action={<Button onClick={() => setAdding(true)}>Add your first habit</Button>}>

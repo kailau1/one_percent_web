@@ -9,6 +9,8 @@ import { server } from '@/test/msw/server'
 import { renderRoutes } from '@/test/renderWithProviders'
 
 const heading = (name: string) => screen.findByRole('heading', { level: 1, name })
+/** The Today page, whose heading is the date. */
+const todayPage = () => screen.findByRole('region', { name: 'Your year' })
 
 describe('route protection', () => {
   it('sends a logged-out visitor to login and remembers where they were going', async () => {
@@ -45,7 +47,7 @@ describe('route protection', () => {
     signIn()
     server.use(http.get(`${API}/api/journals/me`, () => new HttpResponse(null, { status: 401 })))
     renderRoutes(routes, { route: '/today' })
-    await heading('Today')
+    await todayPage()
 
     await apiRequest('/api/journals/me').catch(() => {})
 
@@ -58,7 +60,7 @@ describe('route protection', () => {
     signIn()
     renderRoutes(routes, { route: '/login' })
 
-    expect(await heading('Today')).toBeInTheDocument()
+    expect(await todayPage()).toBeInTheDocument()
   })
 })
 
@@ -85,7 +87,7 @@ describe('logging in', () => {
 
     await fillAndSubmit(user, 'kai@example.com', CORRECT_PASSWORD)
 
-    expect(await heading('Today')).toBeInTheDocument()
+    expect(await todayPage()).toBeInTheDocument()
   })
 
   it('explains a wrong password without calling it an expired session', async () => {
@@ -139,7 +141,7 @@ describe('signing up', () => {
 
     await fill(user, 'new@example.com')
 
-    expect(await heading('Today')).toBeInTheDocument()
+    expect(await todayPage()).toBeInTheDocument()
     expect(session.getToken()).not.toBeNull()
   })
 

@@ -11,7 +11,8 @@ describe('app shell', () => {
   it('opens on Today', async () => {
     renderRoutes(routes, { route: '/' })
 
-    expect(await screen.findByRole('heading', { level: 1, name: 'Today' })).toBeInTheDocument()
+    expect(await screen.findByRole('region', { name: 'Your year' })).toBeInTheDocument()
+    expect(screen.getByText(/^Good (morning|afternoon|evening), Kai$|^Still up, Kai$/)).toBeInTheDocument()
   })
 
   it('navigates between sections from the sidebar and marks the current one', async () => {

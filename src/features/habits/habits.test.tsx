@@ -65,6 +65,22 @@ describe('habit list', () => {
   })
 })
 
+describe('streak data', () => {
+  it('says so, with a retry, when streak history fails to load', async () => {
+    server.use(http.get(`${API}/api/habit-history`, () => new HttpResponse(null, { status: 500 }), { once: true }))
+    const { user } = renderRoutes(routes, { route: '/habits' })
+    const list = await habitList()
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(/went wrong on the server/i)
+    expect(within(list).queryByText('3 days')).not.toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Try again' }))
+
+    expect(await within(list).findByText('3 days')).toBeInTheDocument()
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+  })
+})
+
 describe('ticking a habit', () => {
   it('ticks it off, saves it and extends the streak straight away', async () => {
     const { user } = renderRoutes(routes, { route: '/habits' })
@@ -170,7 +186,7 @@ describe('adding and editing habits', () => {
     const { user } = renderRoutes(routes, { route: '/habits' })
     await habitList()
 
-    await user.click(screen.getByRole('button', { name: 'Morning run: details' }))
+    await user.click(screen.getByRole('button', { name: /^Morning run.*open details$/ }))
     await user.click(await screen.findByRole('button', { name: 'Edit' }))
     const dialog = await screen.findByRole('dialog', { name: 'Edit habit' })
     const name = within(dialog).getByLabelText('Habit')
@@ -188,7 +204,7 @@ describe('habit details', () => {
     const { user } = renderRoutes(routes, { route: '/habits' })
     await habitList()
 
-    await user.click(screen.getByRole('button', { name: 'Read 10 pages: details' }))
+    await user.click(screen.getByRole('button', { name: /^Read 10 pages.*open details$/ }))
 
     const drawer = await screen.findByRole('dialog', { name: 'Read 10 pages' })
     expect(await within(drawer).findByText('Current streak')).toBeInTheDocument()
@@ -200,7 +216,7 @@ describe('habit details', () => {
   it('ticking in the drawer updates the streak there too', async () => {
     const { user } = renderRoutes(routes, { route: '/habits' })
     await habitList()
-    await user.click(screen.getByRole('button', { name: 'Read 10 pages: details' }))
+    await user.click(screen.getByRole('button', { name: /^Read 10 pages.*open details$/ }))
     const drawer = await screen.findByRole('dialog', { name: 'Read 10 pages' })
     await within(drawer).findByText('Current streak')
 
@@ -213,7 +229,7 @@ describe('habit details', () => {
   it('deletes a habit after confirming', async () => {
     const { user } = renderRoutes(routes, { route: '/habits' })
     await habitList()
-    await user.click(screen.getByRole('button', { name: 'Read 10 pages: details' }))
+    await user.click(screen.getByRole('button', { name: /^Read 10 pages.*open details$/ }))
     await user.click(await screen.findByRole('button', { name: 'Delete' }))
 
     const confirm = await screen.findByRole('dialog', { name: 'Delete this habit?' })
