@@ -1,4 +1,4 @@
-import { screen, within } from '@testing-library/react'
+import { act, screen, waitFor, within } from '@testing-library/react'
 import { http, HttpResponse } from 'msw'
 import { routes } from '@/app/routes'
 import { signIn } from '@/test/auth'
@@ -59,6 +59,30 @@ describe('insights', () => {
 
     expect(await screen.findByText('Your entries haven’t been analysed yet')).toBeInTheDocument()
     expect(screen.queryByRole('list', { name: 'Themes' })).not.toBeInTheDocument()
+  })
+
+  it('is refreshed after an entry is deleted, so it never links to a deleted entry', async () => {
+    // with the app's caching, insights loaded moments ago would otherwise be reused as they were
+    const { user, router } = renderRoutes(routes, { route: '/insights', appCaching: true })
+    await screen.findByRole('list', { name: 'Recent entries about procrastination' })
+
+    await act(() => router.navigate('/journal/j1'))
+    await user.click(await screen.findByRole('button', { name: 'Delete entry' }))
+    const dialog = await screen.findByRole('dialog', { name: 'Delete this entry?' })
+    // what the server would now compute without j1
+    db.insights = {
+      totalEntries: 2,
+      analysedEntries: 1,
+      themes: [{ name: 'procrastination', entryCount: 1, recentEntries: [{ id: 'j2', title: 'Good run', createdAt: '2026-11-10T19:40:00Z' }] }],
+    }
+    await user.click(within(dialog).getByRole('button', { name: 'Delete entry' }))
+    await waitFor(() => expect(router.state.location.pathname).toBe('/journal'))
+
+    await act(() => router.navigate('/insights'))
+
+    const recent = await screen.findByRole('list', { name: 'Recent entries about procrastination' })
+    await waitFor(() => expect(within(recent).queryByRole('link', { name: 'A slow start' })).not.toBeInTheDocument())
+    expect(within(recent).getByRole('link', { name: 'Good run' })).toBeInTheDocument()
   })
 
   it("shows a retry when the server can't be reached, and recovers", async () => {

@@ -62,11 +62,16 @@ export function entryEdited(queryClient: QueryClient, entry: JournalEntry) {
   queryClient.setQueryData(journalKeys.entry(entry.id), entry)
   patchLists(queryClient, entry)
   queryClient.invalidateQueries({ queryKey: journalKeys.lists, predicate: (query) => query.queryKey[2] !== '' })
+  queryClient.invalidateQueries({ queryKey: DERIVED_FROM_ENTRIES }) // edited text can change its themes
 }
+
+/** Queries computed from the journal on the server (the insights page): stale whenever entries change. */
+const DERIVED_FROM_ENTRIES = ['insights'] as const
 
 /** After an entry is created or deleted: every page after it shifts, so lists and days are refetched. */
 function entryAddedOrRemoved(queryClient: QueryClient) {
   queryClient.invalidateQueries({ queryKey: journalKeys.all, predicate: (query) => query.queryKey[1] !== 'entry' })
+  queryClient.invalidateQueries({ queryKey: DERIVED_FROM_ENTRIES })
 }
 
 /** Creates (no id) or updates (id) an entry. */
