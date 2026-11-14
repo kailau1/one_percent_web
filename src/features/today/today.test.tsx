@@ -123,6 +123,20 @@ describe('Today', () => {
     await waitFor(() => expect(screen.queryByRole('alert')).not.toBeInTheDocument())
   })
 
+  it('asks for entry days far enough back for the phone ribbon, and up to tomorrow', async () => {
+    const asked: URLSearchParams[] = []
+    server.events.on('request:start', ({ request }) => {
+      if (new URL(request.url).pathname === '/api/journals/days') asked.push(new URL(request.url).searchParams)
+    })
+    renderRoutes(routes, { route: '/today' })
+
+    await waitFor(() => expect(asked).toHaveLength(1))
+    server.events.removeAllListeners()
+    expect(asked[0].get('from')! <= dayKey(83)).toBe(true) // the 12-week ribbon on phones
+    expect(asked[0].get('from')! <= `${new Date().getFullYear()}-01-01`).toBe(true) // the whole year
+    expect(asked[0].get('to')).toBe(dayKey(-1))
+  })
+
   it('opens a new entry with the N key from anywhere', async () => {
     const { user, router } = renderRoutes(routes, { route: '/today' })
     await year()

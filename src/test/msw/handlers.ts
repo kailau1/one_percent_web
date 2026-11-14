@@ -5,8 +5,11 @@ import { parseDateTime } from '@/lib/dates'
 import { makeToken, testUser } from '../auth'
 import { db, newId } from './db'
 
+/** Like the server: newest first, then by id (descending) so equal times have a fixed order. */
 const newestFirst = (entries: JournalEntry[]) =>
-  [...entries].sort((a, b) => (parseDateTime(b.createdAt)?.getTime() ?? 0) - (parseDateTime(a.createdAt)?.getTime() ?? 0))
+  [...entries].sort(
+    (a, b) => (parseDateTime(b.createdAt)?.getTime() ?? 0) - (parseDateTime(a.createdAt)?.getTime() ?? 0) || b.id.localeCompare(a.id),
+  )
 
 export const API = 'http://api.test'
 

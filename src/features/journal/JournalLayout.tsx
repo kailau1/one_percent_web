@@ -34,7 +34,8 @@ export function JournalLayout() {
   const search = useDebouncedValue(query.trim())
   const { data, error, isPending, refetch, isFetching, isFetchingNextPage, isPlaceholderData, hasNextPage, fetchNextPage } =
     useEntryPages(search)
-  const entries = data?.pages.flatMap((page) => page.items)
+  // If the journal changed between page loads, pages can overlap by an entry: show each once.
+  const entries = data && [...new Map(data.pages.flatMap((page) => page.items).map((entry) => [entry.id, entry])).values()]
   const total = data?.pages[0]?.totalItems ?? 0
   const atIndex = useMatch('/journal') !== null
   const searching = search !== ''
@@ -104,7 +105,7 @@ export function JournalLayout() {
               </p>
             )}
             {entries.length > 0 && (
-              <EntryList entries={entries} hasMore={Boolean(hasNextPage)} loadingMore={isFetchingNextPage} onLoadMore={() => fetchNextPage()} />
+              <EntryList entries={entries} hasMore={Boolean(hasNextPage) && !stale} loadingMore={isFetchingNextPage} onLoadMore={() => fetchNextPage()} />
             )}
           </nav>
         )}

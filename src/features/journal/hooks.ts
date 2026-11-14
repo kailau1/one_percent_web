@@ -35,35 +35,37 @@ export function useEntryDays(from: string, to: string) {
   return useQuery({ queryKey: journalKeys.days(from, to), queryFn: () => getEntryDays(from, to) })
 }
 
-/** An entry already loaded in some list, so opening it from the list is instant. */
-function findInLists(queryClient: QueryClient, id: string): JournalEntry | undefined {
-  for (const [, data] of queryClient.getQueriesData<InfiniteData<Page<JournalEntry>> | Page<JournalEntry>>({ queryKey: journalKeys.all })) {
-    const pages = data && 'pages' in data ? data.pages : data && 'items' in data ? [data] : []
-    for (const page of pages) {
-      const found = page.items.find((entry) => entry.id === id)
-      if (found) return found
-    }
-  }
-  return undefined
+/**
+ * One entry, always the server's current copy. (Not the list's copy as a placeholder: the editor
+ * takes its text once when it opens, so a stale copy could be saved over a newer one.)
+ * 404 → error.kind 'notFound'.
+ */
+export function useEntry(id: string | undefined) {
+  return useQuery({ queryKey: journalKeys.entry(id ?? ''), queryFn: () => getEntry(id!), enabled: Boolean(id) })
 }
 
-/** One entry. Shows the copy from the list straight away, then the server's. 404 → error.kind 'notFound'. */
-export function useEntry(id: string | undefined) {
-  const queryClient = useQueryClient()
-  return useQuery({
-    queryKey: journalKeys.entry(id ?? ''),
-    queryFn: () => getEntry(id!),
-    enabled: Boolean(id),
-    placeholderData: () => (id ? findInLists(queryClient, id) : undefined),
-  })
+type ListData = InfiniteData<Page<JournalEntry>> | Page<JournalEntry>
+
+/** Swaps the new version of an entry into every cached list page that holds it. */
+function patchLists(queryClient: QueryClient, entry: JournalEntry) {
+  const swap = (page: Page<JournalEntry>) => ({ ...page, items: page.items.map((e) => (e.id === entry.id ? entry : e)) })
+  queryClient.setQueriesData<ListData>({ queryKey: journalKeys.lists }, (data) => data && 'pages' in data ? { ...data, pages: data.pages.map(swap) } : data)
+  queryClient.setQueriesData<ListData>({ queryKey: ['journals', 'recent'] }, (data) => (data && 'items' in data ? swap(data) : data))
 }
 
 /**
- * After an entry changes: the entry itself is set from the server's reply, and every list, page
- * and day count is refetched (a new or deleted entry shifts every page after it).
+ * After an entry is edited (or gets feedback): its own cache and every list holding it are patched
+ * in place. Its position can't have changed, so there's nothing to refetch... except search
+ * results, which may now match differently.
  */
-export function entryChanged(queryClient: QueryClient, entry: JournalEntry) {
+export function entryEdited(queryClient: QueryClient, entry: JournalEntry) {
   queryClient.setQueryData(journalKeys.entry(entry.id), entry)
+  patchLists(queryClient, entry)
+  queryClient.invalidateQueries({ queryKey: journalKeys.lists, predicate: (query) => query.queryKey[2] !== '' })
+}
+
+/** After an entry is created or deleted: every page after it shifts, so lists and days are refetched. */
+function entryAddedOrRemoved(queryClient: QueryClient) {
   queryClient.invalidateQueries({ queryKey: journalKeys.all, predicate: (query) => query.queryKey[1] !== 'entry' })
 }
 
@@ -72,7 +74,14 @@ export function useSaveEntry() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: ({ id, input }: { id?: string; input: EntryInput }) => (id ? updateEntry(id, input) : createEntry(input)),
-    onSuccess: (saved) => entryChanged(queryClient, saved),
+    onSuccess: (saved, { id }) => {
+      if (id) {
+        entryEdited(queryClient, saved)
+      } else {
+        queryClient.setQueryData(journalKeys.entry(saved.id), saved)
+        entryAddedOrRemoved(queryClient)
+      }
+    },
   })
 }
 
@@ -82,7 +91,7 @@ export function useDeleteEntry() {
     mutationFn: deleteEntry,
     onSuccess: (_, id) => {
       queryClient.removeQueries({ queryKey: journalKeys.entry(id) })
-      queryClient.invalidateQueries({ queryKey: journalKeys.all })
+      entryAddedOrRemoved(queryClient)
     },
   })
 }

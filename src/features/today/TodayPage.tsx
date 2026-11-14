@@ -1,5 +1,5 @@
 import { useQueryClient } from '@tanstack/react-query'
-import { format, startOfYear } from 'date-fns'
+import { addDays, format, min, startOfYear } from 'date-fns'
 import { ArrowRight, PenLine } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router'
@@ -12,7 +12,7 @@ import { HabitTitle } from '@/features/habits/components/HabitTitle'
 import { HabitToggle } from '@/features/habits/components/HabitToggle'
 import { habitTitle, safeColour } from '@/features/habits/habit'
 import { useHabits, useRecentHistory, useToggleHabit } from '@/features/habits/hooks'
-import { toDayNumber } from '@/features/habits/streaks'
+import { toDayKey, toDayNumber } from '@/features/habits/streaks'
 import { useEntryDays, useRecentEntries } from '@/features/journal/hooks'
 import { cn } from '@/lib/cn'
 import { formatDay, parseDateTime } from '@/lib/dates'
@@ -32,8 +32,10 @@ export function TodayPage() {
   const [now] = useState(() => new Date())
   const habits = useHabits()
   const entries = useRecentEntries(3)
-  // which days this year had an entry, without downloading the entries themselves
-  const entryDays = useEntryDays(format(startOfYear(now), 'yyyy-MM-dd'), format(now, 'yyyy-MM-dd'))
+  // Which days had an entry, without downloading the entries: back far enough for both ribbons (the
+  // whole year, or the last 12 weeks on phones, which reaches into last year until late March), and
+  // on to tomorrow in case the server's idea of today is ahead of this device's.
+  const entryDays = useEntryDays(toDayKey(min([startOfYear(now), addDays(now, -83)])), toDayKey(addDays(now, 1)))
   const history = useRecentHistory()
   const toggle = useToggleHabit()
   const queryClient = useQueryClient()

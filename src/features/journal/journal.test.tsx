@@ -111,6 +111,18 @@ describe('a long journal', () => {
     expect(await screen.findByDisplayValue('Walked out to the lighthouse.')).toBeInTheDocument()
   })
 
+  it("opens the server's current copy, not the list's older one", async () => {
+    const { user } = renderRoutes(routes, { route: '/journal' })
+    await list()
+    // edited elsewhere (another tab, the phone) after the list loaded
+    db.journals = db.journals.map((j) => (j.id === 'j2' ? { ...j, content: 'Updated on my phone.' } : j))
+
+    await user.click(screen.getByRole('link', { name: /Good run/ }))
+
+    expect(await screen.findByDisplayValue('Updated on my phone.')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Save changes' })).toBeDisabled() // nothing stale to save over it
+  })
+
   it('a new entry appears at the top of the list', async () => {
     longJournal()
     const { user } = renderRoutes(routes, { route: '/journal/new' })
