@@ -15,7 +15,7 @@ import { useHabits, useRecentHistory, useToggleHabit } from '@/features/habits/h
 import { toDayNumber } from '@/features/habits/streaks'
 import { useEntries } from '@/features/journal/hooks'
 import { cn } from '@/lib/cn'
-import { formatDay, parseLocalDateTime } from '@/lib/dates'
+import { formatDay, parseDateTime } from '@/lib/dates'
 import { activeDays } from './activity'
 import { YearRibbon } from './YearRibbon'
 
@@ -53,7 +53,7 @@ export function TodayPage() {
 
   const todayNumber = toDayNumber(now)
   const todaysEntry = entries.data?.find((entry) => {
-    const written = parseLocalDateTime(entry.createdAt)
+    const written = parseDateTime(entry.createdAt)
     return written !== null && toDayNumber(written) === todayNumber
   })
   const recentEntries = entries.data?.slice(0, 3) ?? []
@@ -151,7 +151,7 @@ export function TodayPage() {
           {recentEntries.length > 0 && (
             <ul aria-label="Recent entries">
               {recentEntries.map((entry) => {
-                const written = parseLocalDateTime(entry.createdAt)
+                const written = parseDateTime(entry.createdAt)
                 return (
                   <li key={entry.id} className="border-b border-line last:border-b-0">
                     <Link to={`/journal/${entry.id}`} className="flex items-baseline justify-between gap-4 rounded-control py-3 hover:text-action">

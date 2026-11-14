@@ -12,8 +12,8 @@ beforeEach(() => {
   signIn()
   // entries dated relative to now, so "this year" and "today" always line up with the app
   db.journals = [
-    { id: 'j1', title: 'Two days ago', content: 'x', llmResponse: null, createdAt: `${dayKey(2)}T08:00:00` },
-    { id: 'j2', title: 'Last week', content: 'y', llmResponse: null, createdAt: `${dayKey(8)}T20:00:00` },
+    { id: 'j1', title: 'Two days ago', content: 'x', llmResponse: null, createdAt: `${dayKey(2)}T08:00:00Z` },
+    { id: 'j2', title: 'Last week', content: 'y', llmResponse: null, createdAt: `${dayKey(8)}T20:00:00Z` },
   ]
 })
 
@@ -70,7 +70,7 @@ describe('Today', () => {
     expect(await screen.findByRole('link', { name: 'Write today’s entry' })).toHaveAttribute('href', '/journal/new')
     first.unmount()
 
-    db.journals = [...db.journals, { id: 'j9', title: 'This morning', content: 'z', llmResponse: null, createdAt: `${dayKey(0)}T07:00:00` }]
+    db.journals = [...db.journals, { id: 'j9', title: 'This morning', content: 'z', llmResponse: null, createdAt: `${dayKey(0)}T07:00:00Z` }]
     renderRoutes(routes, { route: '/today' })
 
     expect(await screen.findByRole('link', { name: 'Continue today’s entry' })).toHaveAttribute('href', '/journal/j9')

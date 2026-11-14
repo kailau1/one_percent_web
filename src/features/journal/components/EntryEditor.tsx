@@ -6,7 +6,7 @@ import type { JournalEntry } from '@/api/types'
 import { ErrorState } from '@/components/ErrorState'
 import { Button } from '@/components/ui/button'
 import { Dialog } from '@/components/ui/dialog'
-import { formatLongDate, formatTime, parseLocalDateTime } from '@/lib/dates'
+import { formatLongDate, formatTime, parseDateTime } from '@/lib/dates'
 import { useAutosize } from '@/lib/useAutosize'
 import { useShortcut } from '@/lib/useShortcut'
 import { getErrorMessage } from '@/api/client'
@@ -140,7 +140,7 @@ export function EntryEditor({ entry, startingContent = '' }: EntryEditorProps) {
     })
   }
 
-  const createdAt = parseLocalDateTime(entry?.createdAt)
+  const createdAt = parseDateTime(entry?.createdAt)
   const status = saveEntry.isPending ? 'Saving…' : dirty ? 'Unsaved changes' : entry ? 'Saved' : ''
 
   return (

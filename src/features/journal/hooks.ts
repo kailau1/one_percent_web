@@ -1,12 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { JournalEntry } from '@/api/types'
-import { parseLocalDateTime } from '@/lib/dates'
+import { parseDateTime } from '@/lib/dates'
 import { createEntry, deleteEntry, listEntries, updateEntry, type EntryInput } from './api'
 
 export const journalKeys = { all: ['journals'] as const }
 
 function newestFirst(entries: JournalEntry[]): JournalEntry[] {
-  const time = (entry: JournalEntry) => parseLocalDateTime(entry.createdAt)?.getTime() ?? 0
+  const time = (entry: JournalEntry) => parseDateTime(entry.createdAt)?.getTime() ?? 0
   return [...entries].sort((a, b) => time(b) - time(a))
 }
 

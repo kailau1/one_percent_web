@@ -3,7 +3,7 @@ import { useMemo, useState } from 'react'
 import { NavLink } from 'react-router'
 import type { JournalEntry } from '@/api/types'
 import { cn } from '@/lib/cn'
-import { formatDay, formatMonth, parseLocalDateTime } from '@/lib/dates'
+import { formatDay, formatMonth, parseDateTime } from '@/lib/dates'
 
 /** The first couple of lines of an entry, on one line. */
 function excerpt(content: string): string {
@@ -20,7 +20,7 @@ function matches(entry: JournalEntry, query: string): boolean {
 function groupByMonth(entries: JournalEntry[]): { month: string; entries: JournalEntry[] }[] {
   const groups: { month: string; entries: JournalEntry[] }[] = []
   for (const entry of entries) {
-    const date = parseLocalDateTime(entry.createdAt)
+    const date = parseDateTime(entry.createdAt)
     const month = date ? formatMonth(date) : 'Undated'
     const last = groups[groups.length - 1]
     if (last?.month === month) last.entries.push(entry)
@@ -57,7 +57,7 @@ export function EntryList({ entries }: { entries: JournalEntry[] }) {
             <h2 className="sticky top-0 bg-paper px-3 pb-1.5 pt-4 text-sm font-medium text-ink-muted">{group.month}</h2>
             <ul>
               {group.entries.map((entry) => {
-                const date = parseLocalDateTime(entry.createdAt)
+                const date = parseDateTime(entry.createdAt)
                 return (
                   <li key={entry.id}>
                     <NavLink

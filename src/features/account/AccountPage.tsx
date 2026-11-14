@@ -2,10 +2,19 @@ import { LogOut } from 'lucide-react'
 import { Page } from '@/components/layout/Page'
 import { Button } from '@/components/ui/button'
 import { useAuth, useUser } from '@/features/auth/useAuth'
+import { browserTimeZone } from '@/lib/dates'
+import { useProfile } from './hooks'
+
+/** "Europe/London" → "Europe / London"; underscores in zone names ("New_York") become spaces. */
+function zoneName(zone: string): string {
+  return zone.replace(/_/g, ' ').replace(/\//g, ' / ')
+}
 
 export function AccountPage() {
   const user = useUser()
   const { logout } = useAuth()
+  const profile = useProfile()
+  const zone = profile.data?.timeZone ?? browserTimeZone()
 
   return (
     <Page title="Account">
@@ -16,6 +25,11 @@ export function AccountPage() {
         </dd>
         <dt className="text-ink-muted">Email</dt>
         <dd className="break-all">{user.email}</dd>
+        <dt className="text-ink-muted">Time zone</dt>
+        <dd>
+          {zone ? zoneName(zone) : 'Not set'}
+          <p className="mt-1 text-sm text-ink-muted">Your days, and your habits, start at midnight here. It follows this device.</p>
+        </dd>
       </dl>
       <Button variant="secondary" onClick={logout}>
         <LogOut aria-hidden />
