@@ -1,0 +1,120 @@
+@import 'tailwindcss';
+@import '@fontsource-variable/figtree';
+@import '@fontsource-variable/literata';
+@import '@fontsource-variable/literata/wght-italic.css';
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/*
+ * Design tokens. Semantic names (paper, ink, action…) rather than raw colours, so components
+ * never mention a hex value and dark mode is just a second set of values.
+ *
+ * Palette: cool "morning" tones. Sky is the brand blue from the mobile app; Deep sky is its
+ * darker partner for anything clickable (Sky alone fails contrast on light backgrounds);
+ * Sunrise is reserved for streaks and "done", so it always means progress.
+ */
+:root {
+  --paper: #f3f6f9;
+  --surface: #ffffff;
+  --sunken: #e9eef3;
+  --ink: #17263a;
+  --ink-muted: #56667a;
+  --ink-faint: #8593a4;
+  --line: #d8e0e9;
+  --sky: #74b7e2;
+  --sky-wash: #e3f0f9;
+  --action: #2b6ca3;
+  --action-hover: #235a8a;
+  --on-action: #ffffff;
+  --sunrise: #e9a23b;
+  --sunrise-wash: #fbf0dc;
+  --danger: #b3372f;
+  --danger-wash: #fbe9e7;
+  --warning-wash: #fdf3d9;
+  --warning-line: #e6c878;
+}
+
+.dark {
+  --paper: #0f1b2b;
+  --surface: #16263a;
+  --sunken: #0b1522;
+  --ink: #e6edf5;
+  --ink-muted: #9fb0c3;
+  --ink-faint: #6f8298;
+  --line: #27394f;
+  --sky: #74b7e2;
+  --sky-wash: #1b3350;
+  --action: #86c3ea;
+  --action-hover: #a3d2f0;
+  --on-action: #0f1b2b;
+  --sunrise: #f0b254;
+  --sunrise-wash: #3a2e17;
+  --danger: #f08b82;
+  --danger-wash: #3b1f1f;
+  --warning-wash: #33290f;
+  --warning-line: #6b5621;
+}
+
+@theme inline {
+  --color-paper: var(--paper);
+  --color-surface: var(--surface);
+  --color-sunken: var(--sunken);
+  --color-ink: var(--ink);
+  --color-ink-muted: var(--ink-muted);
+  --color-ink-faint: var(--ink-faint);
+  --color-line: var(--line);
+  --color-sky: var(--sky);
+  --color-sky-wash: var(--sky-wash);
+  --color-action: var(--action);
+  --color-action-hover: var(--action-hover);
+  --color-on-action: var(--on-action);
+  --color-sunrise: var(--sunrise);
+  --color-sunrise-wash: var(--sunrise-wash);
+  --color-danger: var(--danger);
+  --color-danger-wash: var(--danger-wash);
+  --color-warning-wash: var(--warning-wash);
+  --color-warning-line: var(--warning-line);
+
+  /* Figtree for the interface; Literata (made for long reading) for entries and dates. */
+  --font-sans: 'Figtree Variable', ui-sans-serif, system-ui, sans-serif;
+  --font-serif: 'Literata Variable', ui-serif, Georgia, serif;
+
+  /* Radius follows importance: small controls < cards < large panels. */
+  --radius-control: 0.5rem;
+  --radius-card: 0.875rem;
+  --radius-panel: 1.25rem;
+
+  /* The writing column: ~68 characters of Literata at reading size. */
+  --container-prose: 40rem;
+}
+
+@layer base {
+  html {
+    color-scheme: light;
+  }
+  html.dark {
+    color-scheme: dark;
+  }
+  body {
+    @apply bg-paper text-ink font-sans antialiased;
+    font-feature-settings: 'ss01';
+  }
+  /* One visible, consistent keyboard focus ring everywhere. */
+  :focus-visible {
+    outline: 2px solid var(--action);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+  ::selection {
+    background: var(--sky-wash);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
