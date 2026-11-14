@@ -1,4 +1,4 @@
-import type { Habit, HabitHistoryRecord, JournalEntry, UserProfile } from '@/api/types'
+import type { Habit, HabitHistoryRecord, JournalEntry, ThemeInsights, UserProfile } from '@/api/types'
 
 /**
  * The fake backend's data. Tests change it directly (db.journals = []) to set up a scenario;
@@ -8,6 +8,7 @@ export interface Db {
   /** GET /api/users/me. Its zone matches the test browser's, so nothing syncs unless a test changes it. */
   profile: UserProfile
   journals: JournalEntry[]
+  insights: ThemeInsights
   habits: Habit[]
   history: HabitHistoryRecord[]
   /** "Today" as the fake server sees it: the real current day, so streaks line up with the app. */
@@ -28,6 +29,21 @@ export function dayKey(daysAgo: number): string {
 function defaults(): Db {
   return {
     profile: { id: 'u1', email: 'kai@example.com', firstName: 'Kai', lastName: 'Lau', timeZone: 'Europe/London' },
+    insights: {
+      totalEntries: 3,
+      analysedEntries: 2,
+      themes: [
+        {
+          name: 'procrastination',
+          entryCount: 2,
+          recentEntries: [
+            { id: 'j1', title: 'A slow start', createdAt: '2026-11-12T08:15:00.123Z' },
+            { id: 'j2', title: 'Good run', createdAt: '2026-11-10T19:40:00Z' },
+          ],
+        },
+        { name: 'self-doubt', entryCount: 1, recentEntries: [{ id: 'j1', title: 'A slow start', createdAt: '2026-11-12T08:15:00.123Z' }] },
+      ],
+    },
     journals: [
       {
         id: 'j1',

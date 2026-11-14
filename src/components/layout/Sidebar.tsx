@@ -1,4 +1,4 @@
-import { BookOpenText, CircleUserRound, ListChecks, Moon, Sun, SunMedium } from 'lucide-react'
+import { BookOpenText, CircleUserRound, Lightbulb, ListChecks, Moon, Sun, SunMedium } from 'lucide-react'
 import { NavLink } from 'react-router'
 import { cn } from '@/lib/cn'
 import { useTheme } from '@/lib/useTheme'
@@ -7,6 +7,7 @@ const destinations = [
   { to: '/today', label: 'Today', icon: SunMedium },
   { to: '/journal', label: 'Journal', icon: BookOpenText },
   { to: '/habits', label: 'Habits', icon: ListChecks },
+  { to: '/insights', label: 'Insights', icon: Lightbulb },
 ] as const
 
 function navClass({ isActive }: { isActive: boolean }) {
