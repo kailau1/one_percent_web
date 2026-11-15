@@ -5,6 +5,7 @@ import { LoginPage } from '@/features/auth/LoginPage'
 import { PublicOnly, RequireAuth } from '@/features/auth/RequireAuth'
 import { SignupPage } from '@/features/auth/SignupPage'
 import { HabitsPage } from '@/features/habits/HabitsPage'
+import { InsightsPage } from '@/features/insights/InsightsPage'
 import { EntryPage } from '@/features/journal/EntryPage'
 import { JournalIndex } from '@/features/journal/JournalIndex'
 import { JournalLayout } from '@/features/journal/JournalLayout'
@@ -39,6 +40,7 @@ export const routes: RouteObject[] = [
             ],
           },
           { path: 'habits', element: <HabitsPage /> },
+          { path: 'insights', element: <InsightsPage /> },
           { path: 'account', element: <AccountPage /> },
           { path: '*', element: <NotFoundPage /> },
         ],

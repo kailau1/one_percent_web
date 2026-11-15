@@ -5,10 +5,14 @@ import type { ReactElement } from 'react'
 import { createMemoryRouter, RouterProvider, type RouteObject } from 'react-router'
 import { Providers } from '@/app/providers'
 
-function testQueryClient() {
-  // no retries or caching between tests: failures surface immediately and tests stay independent
+function testQueryClient(appCaching: boolean) {
+  // No retries; and by default no caching, so every render fetches. `appCaching` keeps the app's real
+  // freshness rules (data reused for 30s), for tests about what refreshes after a change.
   return new QueryClient({
-    defaultOptions: { queries: { retry: false, gcTime: 0 }, mutations: { retry: false } },
+    defaultOptions: {
+      queries: appCaching ? { retry: false, staleTime: 30_000 } : { retry: false, gcTime: 0 },
+      mutations: { retry: false },
+    },
   })
 }
 
@@ -18,11 +22,11 @@ export function renderWithProviders(ui: ReactElement, { route = '/' }: { route?:
 }
 
 /** Renders a set of routes (e.g. the real app routes) starting at a given URL. */
-export function renderRoutes(routes: RouteObject[], { route = '/' }: { route?: string } = {}) {
+export function renderRoutes(routes: RouteObject[], { route = '/', appCaching = false }: { route?: string; appCaching?: boolean } = {}) {
   const router = createMemoryRouter(routes, { initialEntries: [route] })
   const user = userEvent.setup()
   const view = render(
-    <Providers queryClient={testQueryClient()}>
+    <Providers queryClient={testQueryClient(appCaching)}>
       <RouterProvider router={router} />
     </Providers>,
   )

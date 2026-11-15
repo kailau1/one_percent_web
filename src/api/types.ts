@@ -23,6 +23,20 @@ export interface Page<T> {
   hasNext: boolean
 }
 
+/** GET /api/insights/themes (ThemeInsightsDTO): what the user's journal keeps coming back to. */
+export interface ThemeInsights {
+  totalEntries: number
+  /** Entries that could be matched to themes; the rest were saved while AI analysis was unavailable. */
+  analysedEntries: number
+  /** Most common first. Each analysed entry counts towards its three closest themes. */
+  themes: {
+    name: string
+    entryCount: number
+    /** Up to three, newest first. */
+    recentEntries: { id: string; title: string | null; createdAt: string }[]
+  }[]
+}
+
 export type HabitType = 'standard' | 'trigger-action'
 
 export interface Habit {

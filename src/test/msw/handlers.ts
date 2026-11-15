@@ -153,6 +153,9 @@ export const handlers: RequestHandler[] = [
   // AiController.getTipOfTheDay: 200 { response }
   http.get(`${API}/api/ai/tip`, () => HttpResponse.json({ response: db.tip })),
 
+  // InsightsController.themes: 200 ThemeInsightsDTO for the logged-in user
+  http.get(`${API}/api/insights/themes`, () => HttpResponse.json(db.insights)),
+
   // HabitController. `completed` means "done today" and is derived from today's history on the server.
   http.get(`${API}/api/habits/me`, () => HttpResponse.json(db.habits)),
 
