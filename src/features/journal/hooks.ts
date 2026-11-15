@@ -1,35 +1,86 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import type { JournalEntry } from '@/api/types'
-import { parseDateTime } from '@/lib/dates'
-import { createEntry, deleteEntry, listEntries, updateEntry, type EntryInput } from './api'
+import { keepPreviousData, useInfiniteQuery, useMutation, useQuery, useQueryClient, type InfiniteData, type QueryClient } from '@tanstack/react-query'
+import type { JournalEntry, Page } from '@/api/types'
+import { createEntry, deleteEntry, getEntry, getEntryDays, searchEntries, updateEntry, type EntryInput } from './api'
 
-export const journalKeys = { all: ['journals'] as const }
-
-function newestFirst(entries: JournalEntry[]): JournalEntry[] {
-  const time = (entry: JournalEntry) => parseDateTime(entry.createdAt)?.getTime() ?? 0
-  return [...entries].sort((a, b) => time(b) - time(a))
+export const journalKeys = {
+  all: ['journals'] as const,
+  lists: ['journals', 'list'] as const,
+  list: (q: string) => ['journals', 'list', q.trim()] as const,
+  recent: (count: number) => ['journals', 'recent', count] as const,
+  entry: (id: string) => ['journals', 'entry', id] as const,
+  days: (from: string, to: string) => ['journals', 'days', from, to] as const,
 }
 
-/** Every entry, newest first. The list carries full content, so single entries are read from it. */
-export function useEntries() {
-  return useQuery({ queryKey: journalKeys.all, queryFn: listEntries, select: newestFirst })
+/**
+ * The journal list, a page at a time, newest first. `q` searches titles and text on the server.
+ * While a new search loads, the previous results stay on screen instead of flashing empty.
+ */
+export function useEntryPages(q = '') {
+  return useInfiniteQuery({
+    queryKey: journalKeys.list(q),
+    queryFn: ({ pageParam }) => searchEntries({ q, page: pageParam }),
+    initialPageParam: 0,
+    getNextPageParam: (last: Page<JournalEntry>) => (last.hasNext ? last.page + 1 : undefined),
+    placeholderData: keepPreviousData,
+  })
 }
 
-/** One entry out of the list. `entry` is undefined while loading or if the ID doesn't exist. */
+/** The newest few entries (the Today page's "recent entries"). */
+export function useRecentEntries(count = 3) {
+  return useQuery({ queryKey: journalKeys.recent(count), queryFn: () => searchEntries({ size: count }) })
+}
+
+/** The days with at least one entry, for the year ribbon and streaks. */
+export function useEntryDays(from: string, to: string) {
+  return useQuery({ queryKey: journalKeys.days(from, to), queryFn: () => getEntryDays(from, to) })
+}
+
+/**
+ * One entry, always the server's current copy. (Not the list's copy as a placeholder: the editor
+ * takes its text once when it opens, so a stale copy could be saved over a newer one.)
+ * 404 → error.kind 'notFound'.
+ */
 export function useEntry(id: string | undefined) {
-  const query = useEntries()
-  return { ...query, entry: id ? query.data?.find((e) => e.id === id) : undefined }
+  return useQuery({ queryKey: journalKeys.entry(id ?? ''), queryFn: () => getEntry(id!), enabled: Boolean(id) })
 }
 
-/** Creates (no id) or updates (id) an entry, then puts the server's version into the cached list. */
+type ListData = InfiniteData<Page<JournalEntry>> | Page<JournalEntry>
+
+/** Swaps the new version of an entry into every cached list page that holds it. */
+function patchLists(queryClient: QueryClient, entry: JournalEntry) {
+  const swap = (page: Page<JournalEntry>) => ({ ...page, items: page.items.map((e) => (e.id === entry.id ? entry : e)) })
+  queryClient.setQueriesData<ListData>({ queryKey: journalKeys.lists }, (data) => data && 'pages' in data ? { ...data, pages: data.pages.map(swap) } : data)
+  queryClient.setQueriesData<ListData>({ queryKey: ['journals', 'recent'] }, (data) => (data && 'items' in data ? swap(data) : data))
+}
+
+/**
+ * After an entry is edited (or gets feedback): its own cache and every list holding it are patched
+ * in place. Its position can't have changed, so there's nothing to refetch... except search
+ * results, which may now match differently.
+ */
+export function entryEdited(queryClient: QueryClient, entry: JournalEntry) {
+  queryClient.setQueryData(journalKeys.entry(entry.id), entry)
+  patchLists(queryClient, entry)
+  queryClient.invalidateQueries({ queryKey: journalKeys.lists, predicate: (query) => query.queryKey[2] !== '' })
+}
+
+/** After an entry is created or deleted: every page after it shifts, so lists and days are refetched. */
+function entryAddedOrRemoved(queryClient: QueryClient) {
+  queryClient.invalidateQueries({ queryKey: journalKeys.all, predicate: (query) => query.queryKey[1] !== 'entry' })
+}
+
+/** Creates (no id) or updates (id) an entry. */
 export function useSaveEntry() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: ({ id, input }: { id?: string; input: EntryInput }) => (id ? updateEntry(id, input) : createEntry(input)),
-    onSuccess: (saved) => {
-      queryClient.setQueryData<JournalEntry[]>(journalKeys.all, (entries = []) =>
-        entries.some((e) => e.id === saved.id) ? entries.map((e) => (e.id === saved.id ? saved : e)) : [saved, ...entries],
-      )
+    onSuccess: (saved, { id }) => {
+      if (id) {
+        entryEdited(queryClient, saved)
+      } else {
+        queryClient.setQueryData(journalKeys.entry(saved.id), saved)
+        entryAddedOrRemoved(queryClient)
+      }
     },
   })
 }
@@ -39,7 +90,8 @@ export function useDeleteEntry() {
   return useMutation({
     mutationFn: deleteEntry,
     onSuccess: (_, id) => {
-      queryClient.setQueryData<JournalEntry[]>(journalKeys.all, (entries = []) => entries.filter((e) => e.id !== id))
+      queryClient.removeQueries({ queryKey: journalKeys.entry(id) })
+      entryAddedOrRemoved(queryClient)
     },
   })
 }

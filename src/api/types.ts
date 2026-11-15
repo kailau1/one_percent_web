@@ -13,6 +13,16 @@ export interface JournalEntry {
   createdAt: string
 }
 
+/** One page of a longer list (PageDTO). `page` counts from 0. */
+export interface Page<T> {
+  items: T[]
+  page: number
+  size: number
+  totalItems: number
+  totalPages: number
+  hasNext: boolean
+}
+
 export type HabitType = 'standard' | 'trigger-action'
 
 export interface Habit {

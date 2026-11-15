@@ -99,7 +99,8 @@ describe('Today', () => {
       http.get(`${API}${path}`, () => (down ? HttpResponse.error() : ok()))
     server.use(
       flaky('/api/habits/me', () => HttpResponse.json(db.habits)),
-      flaky('/api/journals/me', () => HttpResponse.json(db.journals)),
+      flaky('/api/journals', () => HttpResponse.json({ items: db.journals.slice(0, 3), page: 0, size: 3, totalItems: db.journals.length, totalPages: 1, hasNext: false })),
+      flaky('/api/journals/days', () => HttpResponse.json([])),
       flaky('/api/habit-history', () => HttpResponse.json(db.history)),
       flaky('/api/ai/tip', () => HttpResponse.json({ response: db.tip })),
     )
@@ -120,6 +121,20 @@ describe('Today', () => {
     expect(await screen.findByRole('list', { name: 'Recent entries' })).toBeInTheDocument()
     expect(await screen.findByText(db.tip)).toBeInTheDocument()
     await waitFor(() => expect(screen.queryByRole('alert')).not.toBeInTheDocument())
+  })
+
+  it('asks for entry days far enough back for the phone ribbon, and up to tomorrow', async () => {
+    const asked: URLSearchParams[] = []
+    server.events.on('request:start', ({ request }) => {
+      if (new URL(request.url).pathname === '/api/journals/days') asked.push(new URL(request.url).searchParams)
+    })
+    renderRoutes(routes, { route: '/today' })
+
+    await waitFor(() => expect(asked).toHaveLength(1))
+    server.events.removeAllListeners()
+    expect(asked[0].get('from')! <= dayKey(83)).toBe(true) // the 12-week ribbon on phones
+    expect(asked[0].get('from')! <= `${new Date().getFullYear()}-01-01`).toBe(true) // the whole year
+    expect(asked[0].get('to')).toBe(dayKey(-1))
   })
 
   it('opens a new entry with the N key from anywhere', async () => {
