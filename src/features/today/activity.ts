@@ -1,6 +1,6 @@
 import type { Habit, HabitHistoryRecord, JournalEntry } from '@/api/types'
 import { toDayNumber } from '@/features/habits/streaks'
-import { parseLocalDateTime } from '@/lib/dates'
+import { parseDateTime } from '@/lib/dates'
 
 /**
  * The days (as day numbers) on which the user "showed up": wrote a journal entry or completed
@@ -14,7 +14,7 @@ export function activeDays(
 ): Set<number> {
   const days = new Set<number>()
   for (const entry of entries) {
-    const written = parseLocalDateTime(entry.createdAt)
+    const written = parseDateTime(entry.createdAt)
     if (written) days.add(toDayNumber(written))
   }
   const todayNumber = toDayNumber(today)

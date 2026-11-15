@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { Outlet, useNavigate } from 'react-router'
 import { OfflineBanner } from '@/components/OfflineBanner'
 import { Button } from '@/components/ui/button'
+import { useTimeZoneSync } from '@/features/account/hooks'
 import { useShortcut } from '@/lib/useShortcut'
 import { Sidebar, Wordmark } from './Sidebar'
 
@@ -17,6 +18,8 @@ export function AppShell() {
 
   // N starts a new journal entry from anywhere (ignored while typing in a field).
   useShortcut('n', () => navigate('/journal/new'))
+  // days (habit ticks, today's entry) start at midnight where this device is
+  useTimeZoneSync()
 
   return (
     <div className="flex min-h-dvh flex-col lg:flex-row">
