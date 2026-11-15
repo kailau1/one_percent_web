@@ -16,10 +16,21 @@ export const HABIT_COLOURS = [
 
 export const DEFAULT_COLOUR = HABIT_COLOURS[0].value
 
+export type HabitTitleFields = Pick<Habit, 'habitType' | 'habitName' | 'trigger' | 'action'>
+
+/**
+ * One half of a "When I …, I will …" sentence, always lower case: it sits mid-sentence, so a
+ * capital ("When I Pour my coffee") looks wrong. Older habits (or ones made in the mobile app)
+ * may have been saved with capitals, so this is applied on display as well as on input.
+ */
+export function habitClause(text: string | null | undefined): string {
+  return text?.trim().toLowerCase() || '…'
+}
+
 /** A habit in one line: its name, or "When I …, I will …" for trigger → action habits. */
-export function habitTitle(habit: Pick<Habit, 'habitType' | 'habitName' | 'trigger' | 'action'>): string {
+export function habitTitle(habit: HabitTitleFields): string {
   if (habit.habitType === 'trigger-action') {
-    return `When I ${habit.trigger?.trim() || '…'}, I will ${habit.action?.trim() || '…'}`
+    return `When I ${habitClause(habit.trigger)}, I will ${habitClause(habit.action)}`
   }
   return habit.habitName?.trim() || 'Untitled habit'
 }

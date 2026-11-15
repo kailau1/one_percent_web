@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { TipCard } from '@/features/ai/TipCard'
 import { useUser } from '@/features/auth/useAuth'
+import { HabitTitle } from '@/features/habits/components/HabitTitle'
 import { HabitToggle } from '@/features/habits/components/HabitToggle'
 import { habitTitle, safeColour } from '@/features/habits/habit'
 import { useHabits, useRecentHistory, useToggleHabit } from '@/features/habits/hooks'
@@ -114,7 +115,9 @@ export function TodayPage() {
                       label={habitTitle(habit)}
                       colour={safeColour(habit.colour)}
                     />
-                    <span className={cn('min-w-0 flex-1 truncate font-serif text-lg', habit.completed && 'text-ink-muted')}>{habitTitle(habit)}</span>
+                    <span className={cn('min-w-0 flex-1 truncate font-serif text-lg', habit.completed && 'text-ink-muted')}>
+                      <HabitTitle habit={habit} muted={habit.completed} />
+                    </span>
                   </li>
                 ))}
               </ul>

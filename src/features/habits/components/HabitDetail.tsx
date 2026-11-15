@@ -13,6 +13,7 @@ import { habitTitle, safeColour } from '../habit'
 import { useDeleteHabit, useHabitHistory } from '../hooks'
 import { calculateCurrentStreak, calculateLongestStreak, withToday } from '../streaks'
 import { HabitFormDialog } from './HabitFormDialog'
+import { HabitTitle } from './HabitTitle'
 import { HabitToggle } from './HabitToggle'
 import { Heatmap } from './Heatmap'
 
@@ -81,7 +82,9 @@ export function HabitDetail({ habit, onClose, onToggle }: HabitDetailProps) {
                     colour={colour}
                   />
                   <div className="min-w-0 flex-1">
-                    <RadixDialog.Title className="font-serif text-2xl leading-snug">{habitTitle(habit)}</RadixDialog.Title>
+                    <RadixDialog.Title className="font-serif text-2xl leading-snug">
+                      <HabitTitle habit={habit} />
+                    </RadixDialog.Title>
                     {habit.habitType === 'standard' && habit.description && <p className="mt-1 text-ink-muted">{habit.description}</p>}
                     <p className="mt-1 text-sm text-ink-muted">{habit.completed ? 'Done today' : 'Not done yet today'}</p>
                   </div>

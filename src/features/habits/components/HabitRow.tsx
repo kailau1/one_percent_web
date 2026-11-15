@@ -2,6 +2,7 @@ import { ChevronRight, Flame } from 'lucide-react'
 import type { Habit } from '@/api/types'
 import { cn } from '@/lib/cn'
 import { habitTitle, safeColour } from '../habit'
+import { HabitTitle } from './HabitTitle'
 import { HabitToggle } from './HabitToggle'
 
 interface HabitRowProps {
@@ -23,7 +24,9 @@ export function HabitRow({ habit, streak, onToggle, onOpen }: HabitRowProps) {
       {/* No aria-label: the accessible name must contain the visible text (voice control says what it sees). */}
       <button type="button" onClick={onOpen} className="group flex min-w-0 flex-1 items-center gap-3 rounded-control text-left">
         <span className="min-w-0 flex-1">
-          <span className={cn('block truncate font-serif text-lg', habit.completed && 'text-ink-muted')}>{title}</span>
+          <span className={cn('block truncate font-serif text-lg', habit.completed && 'text-ink-muted')}>
+            <HabitTitle habit={habit} muted={habit.completed} />
+          </span>
           {habit.habitType === 'standard' && habit.description && (
             <span className="block truncate text-sm text-ink-muted">{habit.description}</span>
           )}

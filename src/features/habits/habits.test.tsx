@@ -13,6 +13,9 @@ beforeEach(() => {
 
 const habitList = () => screen.findByRole('list', { name: 'Your habits' })
 const toggleFor = (name: string) => screen.getByRole('checkbox', { name: `${name}: done today` })
+/** Matches a habit title whose text is split across elements (the bold "When I" / "I will"). */
+const sentence = (text: string) => (_: string, element: Element | null) =>
+  element?.textContent === text && Array.from(element.children).every((child) => child.textContent !== text)
 
 describe('habit list', () => {
   it('shows each habit, with trigger → action habits as a sentence', async () => {
@@ -21,7 +24,32 @@ describe('habit list', () => {
     const list = await habitList()
     expect(within(list).getByText('Read 10 pages')).toBeInTheDocument()
     expect(within(list).getByText('Before bed')).toBeInTheDocument()
-    expect(within(list).getByText('When I pour my coffee, I will write one line')).toBeInTheDocument()
+    expect(within(list).getByText(sentence('When I pour my coffee, I will write one line'))).toBeInTheDocument()
+  })
+
+  it('makes "When I" and "I will" bolder than the rest of the sentence', async () => {
+    renderRoutes(routes, { route: '/habits' })
+
+    const list = await habitList()
+    expect(within(list).getByText('When I')).toHaveClass('font-semibold', 'text-ink-strong')
+    expect(within(list).getByText('I will')).toHaveClass('font-semibold', 'text-ink-strong')
+  })
+
+  it('dims "When I" and "I will" with the rest once the habit is done today', async () => {
+    db.habits.find((h) => h.id === 'h3')!.completed = true
+    renderRoutes(routes, { route: '/habits' })
+
+    const list = await habitList()
+    expect(within(list).getByText('When I')).not.toHaveClass('text-ink-strong')
+    expect(within(list).getByText('I will')).not.toHaveClass('text-ink-strong')
+  })
+
+  it('shows trigger → action habits saved with capitals in lower case', async () => {
+    Object.assign(db.habits.find((h) => h.id === 'h3')!, { trigger: 'Pour My Coffee', action: 'Write One Line' })
+    renderRoutes(routes, { route: '/habits' })
+
+    const list = await habitList()
+    expect(within(list).getByText(sentence('When I pour my coffee, I will write one line'))).toBeInTheDocument()
   })
 
   it('shows what is done today and overall progress', async () => {
@@ -164,8 +192,35 @@ describe('adding and editing habits', () => {
     await user.type(within(dialog).getByLabelText('I will…'), 'go for a walk')
     await user.click(within(dialog).getByRole('button', { name: 'Add habit' }))
 
-    expect(await screen.findByText('When I close my laptop, I will go for a walk')).toBeInTheDocument()
+    expect(await screen.findByText(sentence('When I close my laptop, I will go for a walk'))).toBeInTheDocument()
     expect(db.habits.at(-1)).toMatchObject({ habitType: 'trigger-action', trigger: 'close my laptop', action: 'go for a walk' })
+  })
+
+  it('keeps "when → then" text in lower case as it is typed and saved', async () => {
+    const { user } = renderRoutes(routes, { route: '/habits' })
+    await habitList()
+
+    await user.click(screen.getByRole('button', { name: 'New habit' }))
+    const dialog = await screen.findByRole('dialog', { name: 'New habit' })
+    await user.click(within(dialog).getByRole('radio', { name: /When → then/ }))
+    const trigger = within(dialog).getByLabelText<HTMLInputElement>('When I…')
+    await user.type(trigger, 'Close My Laptop')
+    await user.type(within(dialog).getByLabelText('I will…'), 'GO for a walk')
+
+    expect(trigger).toHaveValue('close my laptop')
+    expect(within(dialog).getByLabelText('I will…')).toHaveValue('go for a walk')
+
+    // a capital typed in the middle doesn't throw the cursor to the end
+    await user.click(trigger)
+    trigger.setSelectionRange(5, 5)
+    await user.keyboard('D')
+    expect(trigger).toHaveValue('closed my laptop')
+    expect(trigger).toHaveProperty('selectionStart', 6)
+
+    await user.click(within(dialog).getByRole('button', { name: 'Add habit' }))
+    await waitFor(() =>
+      expect(db.habits.at(-1)).toMatchObject({ trigger: 'closed my laptop', action: 'go for a walk' }),
+    )
   })
 
   it('keeps the form open with the error when saving fails', async () => {
