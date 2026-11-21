@@ -1,6 +1,8 @@
 import { keepPreviousData, useInfiniteQuery, useMutation, useQuery, useQueryClient, type InfiniteData, type QueryClient } from '@tanstack/react-query'
 import type { JournalEntry, Page } from '@/api/types'
-import { createEntry, deleteEntry, getEntry, getEntryDays, searchEntries, updateEntry, type EntryInput } from './api'
+import { toast } from 'sonner'
+import { getErrorMessage } from '@/api/client'
+import { createEntry, deleteEntry, getEntry, getEntryDays, searchEntries, setEntryThemes, updateEntry, type EntryInput } from './api'
 
 export const journalKeys = {
   all: ['journals'] as const,
@@ -87,6 +89,29 @@ export function useSaveEntry() {
         entryAddedOrRemoved(queryClient)
       }
     },
+  })
+}
+
+/**
+ * Changes an entry's themes. Optimistic: the chips change at once and roll back with a message if the
+ * server refuses; on success the entry, its list copies and the insights page are refreshed.
+ */
+export function useSetEntryThemes(id: string) {
+  const queryClient = useQueryClient()
+  const key = journalKeys.entry(id)
+  return useMutation({
+    mutationFn: (themes: string[]) => setEntryThemes(id, themes),
+    onMutate: async (themes) => {
+      await queryClient.cancelQueries({ queryKey: key })
+      const previous = queryClient.getQueryData<JournalEntry>(key)
+      if (previous) queryClient.setQueryData<JournalEntry>(key, { ...previous, themes })
+      return { previous }
+    },
+    onError: (error, _themes, context) => {
+      if (context?.previous) queryClient.setQueryData(key, context.previous)
+      toast.error(getErrorMessage(error))
+    },
+    onSuccess: (saved) => entryEdited(queryClient, saved),
   })
 }
 

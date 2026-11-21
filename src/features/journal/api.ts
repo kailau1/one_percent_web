@@ -31,4 +31,8 @@ export const createEntry = (input: EntryInput) =>
 export const updateEntry = (id: string, input: EntryInput) =>
   apiRequest<JournalEntry>('/api/journals/entry', { method: 'PUT', body: { id, ...input } })
 
+/** Sets exactly which themes the entry has (the server stores them as corrections to its own tags). */
+export const setEntryThemes = (id: string, themes: string[]) =>
+  apiRequest<JournalEntry>(`/api/journals/entry/${encodeURIComponent(id)}/themes`, { method: 'PUT', body: { themes } })
+
 export const deleteEntry = (id: string) => apiRequest<void>(`/api/journals/${id}`, { method: 'DELETE' })

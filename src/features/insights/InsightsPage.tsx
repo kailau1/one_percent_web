@@ -71,7 +71,7 @@ function ThemeList({ insights }: { insights: ThemeInsights }) {
       </ul>
 
       <p className="mt-6 text-sm text-ink-muted">
-        Each entry counts towards the three themes it’s closest to, so the counts add up to more than your number of entries.
+        Entries are tagged with the themes they’re clearly about: none, one, or a few. You can change an entry’s themes when you open it.
       </p>
     </div>
   )
