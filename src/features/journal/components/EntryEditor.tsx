@@ -15,6 +15,7 @@ import { useRequestFeedback } from '@/features/ai/hooks'
 import { PromptPicker } from '@/features/ai/PromptPicker'
 import { EntryExportMenu } from '@/features/export/EntryExportMenu'
 import { drafts } from '../drafts'
+import { ThemeChips } from './ThemeChips'
 import { useDeleteEntry, useSaveEntry } from '../hooks'
 
 interface EntryEditorProps {
@@ -205,6 +206,7 @@ export function EntryEditor({ entry, startingContent = '' }: EntryEditorProps) {
               ? `${formatLongDate(createdAt)}, ${formatTime(createdAt)}`
               : formatLongDate(openedAt)}
           </p>
+          {entry && <ThemeChips entry={entry} />}
 
           {/* A text area so long titles (e.g. a prompt) wrap instead of being cut off; Enter moves on to the entry. */}
       <textarea

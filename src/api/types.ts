@@ -11,6 +11,10 @@ export interface JournalEntry {
   llmResponse?: string | null
   /** When it was written: a UTC timestamp, e.g. "2026-11-14T09:30:00.123Z". Parse with parseDateTime. */
   createdAt: string
+  /** What the entry is about: automatic tags with the user's corrections, strongest first. Read-only. */
+  themes?: string[]
+  /** Every theme an entry can have (single-entry responses only), for the "add theme" picker. */
+  themeChoices?: string[]
 }
 
 /** One page of a longer list (PageDTO). `page` counts from 0. */

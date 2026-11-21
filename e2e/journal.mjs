@@ -23,7 +23,7 @@ check('Ctrl+S saves a new entry', true)
 
 await p.goto(WEB + '/journal/' + id); await p.waitForSelector('[aria-label="Title"]')
 await p.getByRole('textbox', { name: 'Entry' }).press('End'); await p.getByRole('textbox', { name: 'Entry' }).type(' Edited on the web.')
-await p.getByRole('button', { name: 'Save changes' }).click(); await p.waitForSelector('text=Saved')
+await p.getByRole('button', { name: 'Save changes' }).click(); await p.getByText('Saved', { exact: true }).waitFor()
 const server = await (await fetch(API + '/api/journals/entry/' + id, { headers: auth })).json()
 check('edit is stored on the server', server.content.includes('Edited on the web.'))
 await p.screenshot({ path: S + '/p3-entry-light.png' })
@@ -44,12 +44,15 @@ await p.getByRole('button', { name: 'Save changes' }).click(); await p.waitForSe
 check('failed save keeps the text and shows a retry', (await p.getByRole('textbox', { name: 'Entry' }).inputValue()).includes('Written while offline.'), await p.getByRole('alert').textContent())
 await p.screenshot({ path: S + '/p3-save-failed.png' })
 await p.unroute('**/api/journals/entry')
-await p.getByRole('button', { name: 'Try again' }).click(); await p.waitForSelector('text=Saved')
+await p.getByRole('button', { name: 'Try again' }).click(); await p.getByText('Saved', { exact: true }).waitFor()
 check('retry succeeds once the server is back', true)
 
 // search
-await p.getByRole('searchbox').fill('walk'); await p.waitForTimeout(200)
-check('search filters the list', (await p.getByRole('navigation', { name: 'Entries' }).getByRole('link').count()) === 1)
+// search runs on the server after a short typing pause, so wait for the list to settle
+await p.getByRole('searchbox').fill('walk')
+const links = () => p.getByRole('navigation', { name: 'Entries' }).getByRole('link').count()
+for (let i = 0; i < 50 && (await links()) !== 1; i++) await p.waitForTimeout(100)
+check('search filters the list', (await links()) === 1, (await links()) + ' result(s)')
 await p.getByRole('searchbox').fill('')
 
 // ownership from the browser: another user's entry id is "not found"

@@ -13,6 +13,12 @@ const newestFirst = (entries: JournalEntry[]) =>
 
 export const API = 'http://api.test'
 
+/** The themes the real backend defines (themes/definitions.json). */
+export const THEME_CHOICES = [
+  'anxiety', 'burnout', 'confidence', 'discipline', 'emotional regulation',
+  'gratitude', 'motivation', 'perfectionism', 'procrastination', 'self-doubt',
+]
+
 /** The password the fake backend accepts for any account. */
 export const CORRECT_PASSWORD = 'correct-password'
 
@@ -97,10 +103,23 @@ export const handlers: RequestHandler[] = [
     return HttpResponse.json([...days].sort())
   }),
 
+  // single-entry responses also carry themeChoices (every theme name) for the picker
   http.get(`${API}/api/journals/entry/:id`, ({ params }) => {
     const entry = db.journals.find((j) => j.id === params.id)
     if (!entry) return new HttpResponse(`Journal entry not found: ${params.id}`, { status: 404 })
-    return HttpResponse.json(entry)
+    return HttpResponse.json({ ...entry, themeChoices: THEME_CHOICES })
+  }),
+
+  // PUT /api/journals/entry/{id}/themes { themes }: 400 for a theme that doesn't exist
+  http.put(`${API}/api/journals/entry/:id/themes`, async ({ params, request }) => {
+    const { themes } = (await request.json()) as { themes: string[] }
+    const entry = db.journals.find((j) => j.id === params.id)
+    if (!entry) return new HttpResponse(`Journal entry not found: ${params.id}`, { status: 404 })
+    const unknown = themes.filter((t) => !THEME_CHOICES.includes(t))
+    if (unknown.length) return new HttpResponse(`Unknown theme: ${unknown.join(', ')}.`, { status: 400 })
+    const updated = { ...entry, themes: [...new Set(themes)] }
+    db.journals = db.journals.map((j) => (j.id === updated.id ? updated : j))
+    return HttpResponse.json({ ...updated, themeChoices: THEME_CHOICES })
   }),
 
   http.post(`${API}/api/journals`, async ({ request }) => {
@@ -112,8 +131,8 @@ export const handlers: RequestHandler[] = [
       llmResponse: body.llmResponse ?? null,
       createdAt: '2026-11-14T09:30:00.500Z',
     }
-    db.journals = [...db.journals, created]
-    return HttpResponse.json(created)
+    db.journals = [...db.journals, { ...created, themes: [] }]
+    return HttpResponse.json({ ...created, themes: [], themeChoices: THEME_CHOICES })
   }),
 
   http.put(`${API}/api/journals/entry`, async ({ request }) => {
@@ -123,7 +142,7 @@ export const handlers: RequestHandler[] = [
     // like the real service: title, content and llmResponse are all overwritten
     const updated = { ...existing, title: body.title, content: body.content, llmResponse: body.llmResponse ?? null }
     db.journals = db.journals.map((j) => (j.id === updated.id ? updated : j))
-    return HttpResponse.json(updated)
+    return HttpResponse.json({ ...updated, themeChoices: THEME_CHOICES })
   }),
 
   http.delete(`${API}/api/journals/:id`, ({ params }) => {

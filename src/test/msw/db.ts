@@ -51,6 +51,7 @@ function defaults(): Db {
         content: 'I kept putting off the report today. Every time I sat down I found something else to do.',
         llmResponse: null,
         createdAt: '2026-11-12T08:15:00.123Z',
+        themes: ['procrastination', 'self-doubt'],
       },
       {
         id: 'j2',
@@ -58,6 +59,7 @@ function defaults(): Db {
         content: 'Ran 5k before work and felt clear-headed all morning.',
         llmResponse: 'Notice how the run changed your morning. **Try pairing it** with your hardest task.',
         createdAt: '2026-11-10T19:40:00Z',
+        themes: [],
       },
       {
         id: 'j3',

@@ -38,7 +38,7 @@ check('feedback is stored on the entry on the server', (stored.llmResponse ?? ''
 
 // edit + save keeps feedback
 await p.getByRole('textbox', { name: 'Entry' }).press('Control+End'); await p.getByRole('textbox', { name: 'Entry' }).type(' Tomorrow: one sentence first.')
-await p.getByRole('button', { name: 'Save changes' }).click(); await p.waitForSelector('text=Saved')
+await p.getByRole('button', { name: 'Save changes' }).click(); await p.getByText('Saved', { exact: true }).waitFor()
 const after = await (await fetch(API + '/api/journals/entry/' + id, { headers: auth })).json()
 check('editing the entry keeps its feedback', (after.llmResponse ?? '').includes('implementation intention') && after.content.includes('one sentence first'))
 

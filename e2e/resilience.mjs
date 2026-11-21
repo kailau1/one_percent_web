@@ -48,7 +48,7 @@ const backendUp = async () => { try { return (await fetch(API + '/api/habits/me'
   check('server down: Today shows one banner with one retry, not empty lists', alerts === 1 && !(await t.getByText('No habits yet').isVisible().catch(() => false)), alerts + ' alerts')
   await t.screenshot({ path: S + '/final-server-down-today.png' })
 
-  spawn('bash', ['-c', 'cd ${BACKEND_DIR:-~/projects/one_percent_spring} && OPENAI_BASE_URL=http://localhost:8090 setsid nohup scripts/dev-run.sh > /tmp/op-backend.log 2>&1 &'], { detached: true, stdio: 'ignore' }).unref()
+  spawn('bash', ['-c', 'cd ${BACKEND_DIR:-~/projects/one_percent_spring} && AI_BASE_URL=http://localhost:8090/v1 setsid nohup scripts/dev-run.sh > /tmp/op-backend.log 2>&1 &'], { detached: true, stdio: 'ignore' }).unref()
   for (let i = 0; i < 60 && !(await backendUp()); i++) await sleep(2000)
   check('backend is back up', await backendUp())
 

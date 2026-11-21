@@ -1,14 +1,14 @@
 // A stand-in for the OpenAI API for local end-to-end testing: deterministic, free, offline.
-// Run the backend with OPENAI_BASE_URL=http://localhost:8090 to use it.
+// Run the backend with AI_BASE_URL=http://localhost:8090/v1 to use it.
 import http from 'node:http'
 import { readFileSync } from 'node:fs'
 import { homedir } from 'node:os'
 const DELAY = Number(process.env.STUB_DELAY_MS ?? 900)
 
 // Embeddings the backend can match to its themes: built from the backend's own theme vectors
-// (themes.json), weighted by keywords in the text. Without the file, falls back to small vectors,
+// (themes/text-embedding-3-small.json), weighted by keywords in the text. Without the file, falls back to small vectors,
 // which the backend treats as "not analysed".
-const THEMES_JSON = process.env.THEMES_JSON ?? `${homedir()}/projects/one_percent_spring/src/main/resources/themes.json`
+const THEMES_JSON = process.env.THEMES_JSON ?? `${homedir()}/projects/one_percent_spring/src/main/resources/themes/text-embedding-3-small.json`
 let THEMES = null
 try {
   const all = JSON.parse(readFileSync(THEMES_JSON, 'utf8'))
@@ -18,7 +18,7 @@ try {
   const dims = Number(Object.entries(counts).sort((a, b) => b[1] - a[1])[0][0])
   THEMES = Object.fromEntries(Object.entries(all).filter(([, v]) => v.length === dims))
 } catch (error) {
-  console.error(`\n  !! No themes at ${THEMES_JSON} (${error.message}).\n  !! Embeddings won't match any theme, so Insights will say entries weren't analysed.\n  !! Set THEMES_JSON to the backend's src/main/resources/themes.json.\n`)
+  console.error(`\n  !! No themes at ${THEMES_JSON} (${error.message}).\n  !! Embeddings won't match any theme, so Insights will say entries weren't analysed.\n  !! Set THEMES_JSON to the backend's src/main/resources/themes/text-embedding-3-small.json.\n`)
 }
 const KEYWORDS = {
   // whole words (or word starts, for stems like "procrastinat"), so "imperfect" isn't perfectionism
@@ -61,7 +61,9 @@ http.createServer((req, res) => {
     const body = raw ? JSON.parse(raw) : {}
     if (req.url.endsWith('/v1/embeddings')) {
       // deterministic: the same text always gets the same vector
-      return reply(res, { data: [{ embedding: embed(String(body.input ?? '')) }] })
+      // input is one text or a list of texts (the backend batches them); one vector per text
+      const inputs = Array.isArray(body.input) ? body.input : [body.input ?? '']
+      return reply(res, { data: inputs.map((text, index) => ({ index, embedding: embed(String(text)) })) })
     }
     if (req.url.endsWith('/v1/chat/completions')) {
       const system = body.messages?.[0]?.content ?? ''
