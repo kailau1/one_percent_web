@@ -4,6 +4,7 @@ import { Page } from '@/components/layout/Page'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useAuth, useUser } from '@/features/auth/useAuth'
+import { ExportSection } from '@/features/export/ExportSection'
 import { useProfile } from './hooks'
 
 /** "Europe/London" → "Europe / London"; underscores in zone names ("New_York") become spaces. */
@@ -46,10 +47,13 @@ export function AccountPage() {
           <TimeZone />
         </dd>
       </dl>
-      <Button variant="secondary" onClick={logout}>
-        <LogOut aria-hidden />
-        Log out
-      </Button>
+      <ExportSection />
+      <div className="mt-12 max-w-md border-t border-line pt-8">
+        <Button variant="secondary" onClick={logout}>
+          <LogOut aria-hidden />
+          Log out
+        </Button>
+      </div>
     </Page>
   )
 }
