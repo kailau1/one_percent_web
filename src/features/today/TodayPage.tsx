@@ -17,6 +17,7 @@ import { useEntryDays, useRecentEntries } from '@/features/journal/hooks'
 import { cn } from '@/lib/cn'
 import { formatDay, parseDateTime } from '@/lib/dates'
 import { activeDays } from './activity'
+import { WeekReadyCard } from '@/features/reflections/WeekReadyCard'
 import { YearRibbon } from './YearRibbon'
 
 function greeting(hour: number): string {
@@ -35,7 +36,10 @@ export function TodayPage() {
   // Which days had an entry, without downloading the entries: back far enough for both ribbons (the
   // whole year, or the last 12 weeks on phones, which reaches into last year until late March), and
   // on to tomorrow in case the server's idea of today is ahead of this device's.
-  const entryDays = useEntryDays(toDayKey(min([startOfYear(now), addDays(now, -83)])), toDayKey(addDays(now, 1)))
+  const entryDays = useEntryDays(
+    toDayKey(min([startOfYear(now), addDays(now, -83)])),
+    toDayKey(addDays(now, 1)),
+  )
   const history = useRecentHistory()
   const toggle = useToggleHabit()
   const queryClient = useQueryClient()
@@ -59,7 +63,8 @@ export function TodayPage() {
   // entries come newest first, so if one was written today it's the first
   const newest = recentEntries[0]
   const newestWritten = parseDateTime(newest?.createdAt)
-  const todaysEntry = newestWritten && toDayNumber(newestWritten) === toDayNumber(now) ? newest : undefined
+  const todaysEntry =
+    newestWritten && toDayNumber(newestWritten) === toDayNumber(now) ? newest : undefined
   const doneCount = habits.data?.filter((habit) => habit.completed).length ?? 0
 
   return (
@@ -68,12 +73,30 @@ export function TodayPage() {
         <p className="mb-1 text-ink-muted">
           {greeting(now.getHours())}, {user.firstName}
         </p>
-        <h1 className="font-serif text-4xl font-medium tracking-tight sm:text-5xl">{format(now, 'EEEE d MMMM')}</h1>
+        <h1 className="font-serif text-4xl font-medium tracking-tight sm:text-5xl">
+          {format(now, 'EEEE d MMMM')}
+        </h1>
       </header>
 
-      {pageError && <ErrorState compact error={pageError} onRetry={retryAll} retrying={retrying} className="max-w-prose" />}
+      {pageError && (
+        <ErrorState
+          compact
+          error={pageError}
+          onRetry={retryAll}
+          retrying={retrying}
+          className="max-w-prose"
+        />
+      )}
 
-      <YearRibbon active={active} today={now} unavailable={(Boolean(history.error) && !history.data) || (Boolean(entryDays.error) && !entryDays.data)} />
+      <WeekReadyCard entryDays={entryDays.data} now={now} />
+
+      <YearRibbon
+        active={active}
+        today={now}
+        unavailable={
+          (Boolean(history.error) && !history.data) || (Boolean(entryDays.error) && !entryDays.data)
+        }
+      />
 
       <div className="grid gap-12 lg:grid-cols-2 lg:gap-16">
         <section aria-labelledby="today-habits" className="min-w-0">
@@ -102,7 +125,10 @@ export function TodayPage() {
           {habits.data && habits.data.length === 0 && (
             <p className="text-ink-muted">
               No habits yet.{' '}
-              <Link to="/habits" className="font-medium text-action underline-offset-4 hover:underline">
+              <Link
+                to="/habits"
+                className="font-medium text-action underline-offset-4 hover:underline"
+              >
                 Add your first habit
               </Link>
             </p>
@@ -111,20 +137,31 @@ export function TodayPage() {
             <>
               <ul aria-label="Today’s habits">
                 {habits.data.map((habit) => (
-                  <li key={habit.id} className="flex items-center gap-4 border-b border-line py-3 last:border-b-0">
+                  <li
+                    key={habit.id}
+                    className="flex items-center gap-4 border-b border-line py-3 last:border-b-0"
+                  >
                     <HabitToggle
                       checked={habit.completed}
                       onChange={(completed) => toggle.mutate({ id: habit.id, completed })}
                       label={habitTitle(habit)}
                       colour={safeColour(habit.colour)}
                     />
-                    <span className={cn('min-w-0 flex-1 truncate font-serif text-lg', habit.completed && 'text-ink-muted')}>
+                    <span
+                      className={cn(
+                        'min-w-0 flex-1 truncate font-serif text-lg',
+                        habit.completed && 'text-ink-muted',
+                      )}
+                    >
                       <HabitTitle habit={habit} muted={habit.completed} />
                     </span>
                   </li>
                 ))}
               </ul>
-              <Link to="/habits" className="mt-4 inline-flex items-center gap-1.5 text-sm font-medium text-action underline-offset-4 hover:underline">
+              <Link
+                to="/habits"
+                className="mt-4 inline-flex items-center gap-1.5 text-sm font-medium text-action underline-offset-4 hover:underline"
+              >
                 Streaks and history
                 <ArrowRight aria-hidden className="size-3.5" />
               </Link>
@@ -157,16 +194,29 @@ export function TodayPage() {
                 const written = parseDateTime(entry.createdAt)
                 return (
                   <li key={entry.id} className="border-b border-line last:border-b-0">
-                    <Link to={`/journal/${entry.id}`} className="flex items-baseline justify-between gap-4 rounded-control py-3 hover:text-action">
-                      <span className="truncate font-serif text-lg">{entry.title?.trim() || 'Untitled'}</span>
-                      {written && <span className="shrink-0 text-sm text-ink-muted">{formatDay(written)}</span>}
+                    <Link
+                      to={`/journal/${entry.id}`}
+                      className="flex items-baseline justify-between gap-4 rounded-control py-3 hover:text-action"
+                    >
+                      <span className="truncate font-serif text-lg">
+                        {entry.title?.trim() || 'Untitled'}
+                      </span>
+                      {written && (
+                        <span className="shrink-0 text-sm text-ink-muted">
+                          {formatDay(written)}
+                        </span>
+                      )}
                     </Link>
                   </li>
                 )
               })}
             </ul>
           )}
-          {entries.data && entries.data.totalItems === 0 && <p className="text-ink-muted">Nothing written yet. The first entry is the hardest; keep it short.</p>}
+          {entries.data && entries.data.totalItems === 0 && (
+            <p className="text-ink-muted">
+              Nothing written yet. The first entry is the hardest; keep it short.
+            </p>
+          )}
         </section>
       </div>
 

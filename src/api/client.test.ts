@@ -120,6 +120,14 @@ describe('apiRequest: failures', () => {
     expect(error.message).toBe('An account with this email already exists.')
   })
 
+  it("shows the server's reason for a 503 (the AI couldn't do it just now), but not an HTML error page", async () => {
+    server.use(http.get(`${API}/x`, () => new HttpResponse('Try again in a minute.', { status: 503 })))
+    expect((await failureOf(apiRequest('/x'))).message).toBe('Try again in a minute.')
+
+    server.use(http.get(`${API}/x`, () => new HttpResponse('<html><body>503 Service Unavailable</body></html>', { status: 503 })))
+    expect((await failureOf(apiRequest('/x'))).message).toMatch(/went wrong on the server/)
+  })
+
   it("never shows a 500's body (it could be a stack trace) but keeps it for logging", async () => {
     server.use(http.get(`${API}/x`, () => new HttpResponse('NullPointerException at ...', { status: 500 })))
 

@@ -124,3 +124,26 @@ export interface AiContext {
   maxFacts: number
   maxFactLength: number
 }
+
+/**
+ * A finished week read back to the user (GET /api/reflections/…). With status "notEnoughEntries"
+ * only weekStart, weekEnd and entryCount are present.
+ */
+export interface WeeklyReflection {
+  status: 'ready' | 'notEnoughEntries'
+  /** Monday, "YYYY-MM-DD", in the user's time zone. */
+  weekStart: string
+  /** The Sunday. */
+  weekEnd: string
+  entryCount: number
+  daysWritten?: number
+  /** Most common first: entries this week, and in the four weeks before. */
+  themes?: { name: string; thisWeek: number; previousFourWeeks: number }[]
+  /** Days ticked out of the week's 7. */
+  habits?: { name: string; colour: string; daysDone: number }[]
+  opening?: string
+  /** The user's own words, checked by the server to appear in the entry. */
+  quotes?: { entryId: string; entryTitle: string | null; text: string }[]
+  question?: string
+  createdAt?: string
+}

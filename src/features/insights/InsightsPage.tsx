@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { formatDay, parseDateTime } from '@/lib/dates'
 import { useThemeInsights } from './hooks'
+import { LastWeekSection } from '@/features/reflections/LastWeekSection'
 import { MonthBars } from './MonthBars'
 import { trendLabel } from './trend'
 
@@ -119,6 +120,8 @@ export function InsightsPage() {
 
   return (
     <Page title="Insights">
+      {/* only once there's something to read back: no AI request for someone who hasn't written yet */}
+      {data && data.totalEntries > 0 && <LastWeekSection />}
       {isPending && <InsightsSkeleton />}
       {error && (
         <ErrorState

@@ -219,6 +219,18 @@ export const handlers: RequestHandler[] = [
 
   http.get(`${API}/api/habit-history`, () => HttpResponse.json(db.history)),
 
+  // weekly reflections ("latest" before ":weekStart", so it isn't read as a week)
+  http.get(`${API}/api/reflections/latest`, () => HttpResponse.json(db.latestReflection)),
+  http.get(`${API}/api/reflections`, () =>
+    HttpResponse.json({ items: db.reflections, page: 0, size: 10, totalItems: db.reflections.length, totalPages: 1, hasNext: false }),
+  ),
+  http.get(`${API}/api/reflections/:weekStart`, ({ params }) => {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(String(params.weekStart))) return new HttpResponse("'weekStart' isn't valid.", { status: 400 })
+    const week = db.reflections.find((r) => r.weekStart === params.weekStart)
+    if (!week) return new HttpResponse(`No reflection for the week of ${params.weekStart}`, { status: 404 })
+    return HttpResponse.json(week)
+  }),
+
   // "What One Percent knows about you"
   http.get(`${API}/api/users/me/ai-context`, () => HttpResponse.json(aiContextResponse())),
 
