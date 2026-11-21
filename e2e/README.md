@@ -31,7 +31,7 @@ Each run needs three things up:
 
 ```bash
 node e2e/openai-stub.mjs &                                   # stand-in for OpenAI on :8090 (free, deterministic)
-(cd ~/projects/one_percent_spring && OPENAI_BASE_URL=http://localhost:8090 scripts/dev-run.sh) &   # backend on :8084, database fyp_dev
+(cd ~/projects/one_percent_spring && AI_BASE_URL=http://localhost:8090/v1 scripts/dev-run.sh) &   # backend on :8084, database fyp_dev
 npm run dev &                                                 # this app on :5173
 ```
 
