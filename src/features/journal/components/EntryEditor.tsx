@@ -60,12 +60,14 @@ export function EntryEditor({ entry, startingContent = '' }: EntryEditorProps) {
   const canSave = dirty && content.trim() !== '' && !saveEntry.isPending
 
   // Keep a draft while there are unsaved changes; drop it once there aren't.
+  const pendingDraft = useRef<ReturnType<typeof setTimeout>>(undefined)
   useEffect(() => {
     if (!dirty) {
       drafts.clear(entry?.id)
       return
     }
     const timer = setTimeout(() => drafts.save(entry?.id, { title, content }), 400)
+    pendingDraft.current = timer
     return () => clearTimeout(timer)
   }, [dirty, title, content, entry?.id])
 
@@ -78,6 +80,8 @@ export function EntryEditor({ entry, startingContent = '' }: EntryEditorProps) {
       },
       {
         onSuccess: (saved) => {
+          // a draft write still waiting would otherwise put the saved text back after this clear
+          clearTimeout(pendingDraft.current)
           drafts.clear(entry?.id)
           setShowRestored(false)
           if (!entry) {

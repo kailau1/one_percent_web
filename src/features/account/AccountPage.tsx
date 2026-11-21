@@ -1,4 +1,5 @@
 import { LogOut } from 'lucide-react'
+import { Link } from 'react-router'
 import { ErrorState } from '@/components/ErrorState'
 import { Page } from '@/components/layout/Page'
 import { Button } from '@/components/ui/button'
@@ -16,15 +17,23 @@ function zoneName(zone: string): string {
 function TimeZone() {
   const { data, error, isPending, refetch, isFetching } = useProfile()
 
-  if (isPending) return <Skeleton className="h-5 w-40" aria-label="Loading time zone" role="status" />
-  if (error && !data) return <ErrorState compact error={error} onRetry={() => refetch()} retrying={isFetching} />
+  if (isPending)
+    return <Skeleton className="h-5 w-40" aria-label="Loading time zone" role="status" />
+  if (error && !data)
+    return <ErrorState compact error={error} onRetry={() => refetch()} retrying={isFetching} />
   if (!data.timeZone) {
-    return <p className="text-ink-muted">Not set yet. Days follow the server’s clock until this device sets it.</p>
+    return (
+      <p className="text-ink-muted">
+        Not set yet. Days follow the server’s clock until this device sets it.
+      </p>
+    )
   }
   return (
     <>
       {zoneName(data.timeZone)}
-      <p className="mt-1 text-sm text-ink-muted">Your days, and your habits, start at midnight here. It follows the device you use.</p>
+      <p className="mt-1 text-sm text-ink-muted">
+        Your days, and your habits, start at midnight here. It follows the device you use.
+      </p>
     </>
   )
 }
@@ -47,6 +56,17 @@ export function AccountPage() {
           <TimeZone />
         </dd>
       </dl>
+      <section aria-labelledby="about-you-heading" className="mb-10 max-w-md">
+        <h2 id="about-you-heading" className="mb-2 font-serif text-2xl">
+          What One Percent knows
+        </h2>
+        <p className="mb-4 text-ink-muted">
+          See and change the context the AI is given about you when it gives feedback.
+        </p>
+        <Button variant="secondary" asChild>
+          <Link to="/about-you">Open</Link>
+        </Button>
+      </section>
       <ExportSection />
       <div className="mt-12 max-w-md border-t border-line pt-8">
         <Button variant="secondary" onClick={logout}>
