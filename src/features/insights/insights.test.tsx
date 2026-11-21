@@ -30,6 +30,43 @@ describe('insights', () => {
     expect(within(themes).getByText('in 1 entry')).toBeInTheDocument()
   })
 
+  it('shows how often each theme came up in each of the last six months', async () => {
+    db.insights.themes[0].monthlyCounts = [0, 1, 0, 0, 4, 1]
+    renderRoutes(routes, { route: '/insights' })
+
+    expect(await screen.findByText('Procrastination by month: Most in October: 4 entries.')).toBeInTheDocument()
+    expect(screen.getByText('Self-doubt by month: Most in November: 1 entry.')).toBeInTheDocument()
+  })
+
+  it('names the month under the pointer', async () => {
+    db.insights.themes[0].monthlyCounts = [0, 1, 0, 0, 4, 1]
+    const { user } = renderRoutes(routes, { route: '/insights' })
+    const row = (await screen.findByRole('heading', { name: 'Procrastination' })).closest('li')!
+
+    // the bars are drawn oldest first, each labelled with its month's initial
+    await user.hover(within(row).getAllByText('O', { selector: 'span' })[0])
+
+    expect(within(row).getByText('October: 4 entries')).toBeInTheDocument()
+  })
+
+  it('points out a clear rise this month, and nothing for a single entry', async () => {
+    db.insights.themes[0].monthlyCounts = [0, 1, 0, 1, 1, 3]
+    renderRoutes(routes, { route: '/insights' })
+
+    const rising = (await screen.findByRole('heading', { name: 'Procrastination' })).closest('li')!
+    expect(within(rising).getByText('More this month')).toBeInTheDocument()
+    const single = screen.getByRole('heading', { name: 'Self-doubt' }).closest('li')!
+    expect(within(single).queryByText(/this month|lately/)).not.toBeInTheDocument()
+  })
+
+  it('still works with a server that sends no month counts', async () => {
+    delete db.insights.months
+    renderRoutes(routes, { route: '/insights' })
+
+    expect(await screen.findByRole('heading', { name: 'Procrastination' })).toBeInTheDocument()
+    expect(screen.queryByText(/by month/)).not.toBeInTheDocument()
+  })
+
   it('links each theme to its recent entries', async () => {
     const { user, router } = renderRoutes(routes, { route: '/insights' })
 
