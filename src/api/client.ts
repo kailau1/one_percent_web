@@ -117,8 +117,10 @@ export async function apiRequest<T = unknown>(
     const kind = kindForStatus(response.status)
     // The server rejected our token: end the session once, centrally.
     if (kind === 'unauthorized' && token) session.notifyExpired()
-    // A 400 from our API carries a readable reason (e.g. "An account with this email already exists.").
-    const message = kind === 'badRequest' && text && text.length < 200 ? text : undefined
+    // A 400 from our API carries a readable reason (e.g. "An account with this email already exists."),
+    // and so does a 503 (the AI couldn't do something just now). Never an HTML error page from a proxy.
+    const readable = text && text.length < 200 && !text.trimStart().startsWith('<')
+    const message = (kind === 'badRequest' || response.status === 503) && readable ? text : undefined
     throw new ApiError(kind, message, response.status, text)
   }
 

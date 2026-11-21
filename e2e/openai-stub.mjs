@@ -69,7 +69,16 @@ http.createServer((req, res) => {
       const system = body.messages?.[0]?.content ?? ''
       const user = body.messages?.[1]?.content ?? ''
       let content
-      if (/journaling prompt generator/i.test(system)) {
+      if (/weekly read-back/i.test(system)) {
+        // a JSON reflection quoting the first few words of entry 1, so the server's quote check passes
+        const first = (user.match(/\[Entry 1,[^\]]*\][^\n]*\n([^\n]+)/) ?? [])[1] ?? ''
+        const quote = first.split(/\s+/).slice(0, 6).join(' ')
+        content = JSON.stringify({
+          opening: 'A week with a few starts and stops. You kept coming back to the page anyway.',
+          quotes: quote ? [{ entry: 1, text: quote }] : [],
+          question: 'What would you like more of next week?',
+        })
+      } else if (/journaling prompt generator/i.test(system)) {
         content = ['What did you avoid today, and what was underneath that?', 'Where did you show up for yourself this week?', 'What would make tomorrow morning ten percent easier?', 'Which habit felt lightest lately, and why?', 'What are you carrying that you could put down?', 'What did you learn about how you work best?'].join('\n')
       } else if (/summarisation assistant/i.test(system)) {
         content = 'Suggested implementation intentions: decide the first tiny step in advance.'

@@ -1,4 +1,4 @@
-import type { AiContext, Habit, HabitHistoryRecord, JournalEntry, ThemeInsights, UserProfile } from '@/api/types'
+import type { AiContext, Habit, HabitHistoryRecord, JournalEntry, ThemeInsights, UserProfile, WeeklyReflection } from '@/api/types'
 
 /**
  * The fake backend's data. Tests change it directly (db.journals = []) to set up a scenario;
@@ -18,6 +18,10 @@ export interface Db {
   feedback: string
   /** GET /api/users/me/ai-context, minus the preview (the handler renders it like the backend). */
   aiContext: Omit<AiContext, 'preview'>
+  /** GET /api/reflections/latest */
+  latestReflection: WeeklyReflection
+  /** Weeks already written, newest first (GET /api/reflections and /api/reflections/:weekStart). */
+  reflections: WeeklyReflection[]
 }
 
 /** "YYYY-MM-DD" for the local day `daysAgo` days before today. */
@@ -26,6 +30,23 @@ export function dayKey(daysAgo: number): string {
   d.setDate(d.getDate() - daysAgo)
   const pad = (n: number) => String(n).padStart(2, '0')
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
+}
+
+const lastWeek: WeeklyReflection = {
+  status: 'ready',
+  weekStart: '2026-11-09',
+  weekEnd: '2026-11-15',
+  entryCount: 4,
+  daysWritten: 3,
+  themes: [
+    { name: 'procrastination', thisWeek: 3, previousFourWeeks: 2 },
+    { name: 'self-doubt', thisWeek: 1, previousFourWeeks: 0 },
+  ],
+  habits: [{ name: 'Read 10 pages', colour: '#A7C7E7', daysDone: 3 }],
+  opening: 'A week of starting late and finishing anyway. The report kept coming back.',
+  quotes: [{ entryId: 'j1', entryTitle: 'A slow start', text: 'I kept putting off the report today' }],
+  question: 'What made the report feel bigger than it was?',
+  createdAt: '2026-11-16T08:00:00Z',
 }
 
 function defaults(): Db {
@@ -114,6 +135,8 @@ function defaults(): Db {
       maxFacts: 20,
       maxFactLength: 200,
     },
+    latestReflection: lastWeek,
+    reflections: [lastWeek],
   }
 }
 

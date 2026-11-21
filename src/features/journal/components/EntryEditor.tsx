@@ -39,13 +39,15 @@ export function EntryEditor({ entry, startingContent = '' }: EntryEditorProps) {
   const feedback = useRequestFeedback()
 
   const savedTitle = entry?.title ?? ''
+  // a new entry can arrive with a question to answer (e.g. "Write about this" on a weekly reflection)
+  const [seededTitle] = useState(() => (entry ? undefined : (location.state as { prompt?: string } | null)?.prompt))
   const savedContent = entry?.content ?? startingContent
 
   const [restoredDraft] = useState(() => {
     const draft = drafts.load(entry?.id)
     return draft && (draft.title !== savedTitle || draft.content !== savedContent) ? draft : null
   })
-  const [title, setTitle] = useState(restoredDraft?.title ?? savedTitle)
+  const [title, setTitle] = useState(restoredDraft?.title ?? seededTitle ?? savedTitle)
   const [content, setContent] = useState(restoredDraft?.content ?? savedContent)
   const [showRestored, setShowRestored] = useState(restoredDraft !== null)
   const [confirmingDelete, setConfirmingDelete] = useState(false)
