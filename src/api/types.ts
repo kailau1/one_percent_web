@@ -32,13 +32,19 @@ export interface ThemeInsights {
   totalEntries: number
   /** Entries that could be matched to themes; the rest were saved while AI analysis was unavailable. */
   analysedEntries: number
-  /** Most common first. Each analysed entry counts towards its three closest themes. */
+  /** Most common first. An analysed entry has the themes it's clearly about: none, one or a few. */
   themes: {
     name: string
     entryCount: number
     /** Up to three, newest first. */
     recentEntries: { id: string; title: string | null; createdAt: string }[]
+    /** Entries about this theme in each of `months` (same order). */
+    monthlyCounts?: number[]
   }[]
+  /** The last six calendar months in the user's time zone, oldest first, e.g. "2026-11". */
+  months?: string[]
+  /** Analysed entries written in each of `months`. */
+  entriesPerMonth?: number[]
 }
 
 export type HabitType = 'standard' | 'trigger-action'

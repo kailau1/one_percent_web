@@ -1,5 +1,5 @@
 import { screen, waitFor, within } from '@testing-library/react'
-import { delay, http, HttpResponse } from 'msw'
+import { http, HttpResponse } from 'msw'
 import { routes } from '@/app/routes'
 import { signIn } from '@/test/auth'
 import { db } from '@/test/msw/db'
@@ -23,9 +23,12 @@ describe('feedback on an entry', () => {
   })
 
   it('requests feedback, shows progress, then the result, and it is saved on the entry', async () => {
+    // the reply is held until the test has seen the progress state, so a busy machine can't skip past it
+    let reply!: () => void
+    const replied = new Promise<void>((resolve) => (reply = resolve))
     server.use(
       http.post(`${API}/api/ai/feedback`, async () => {
-        await delay(60)
+        await replied
         db.journals = db.journals.map((j) => (j.id === 'j1' ? { ...j, llmResponse: db.feedback } : j))
         return HttpResponse.json({ response: db.feedback })
       }),
@@ -36,6 +39,7 @@ describe('feedback on an entry', () => {
     await user.click(within(feedback).getByRole('button', { name: 'Get feedback' }))
 
     expect(await within(feedback).findByText(/Reading your entry/)).toBeInTheDocument()
+    reply()
     expect(await within(feedback).findByText('two-minute rule')).toBeInTheDocument()
     expect(db.journals.find((j) => j.id === 'j1')!.llmResponse).toMatch(/two-minute rule/)
   })

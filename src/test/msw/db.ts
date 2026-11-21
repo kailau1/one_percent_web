@@ -40,9 +40,17 @@ function defaults(): Db {
             { id: 'j1', title: 'A slow start', createdAt: '2026-11-12T08:15:00.123Z' },
             { id: 'j2', title: 'Good run', createdAt: '2026-11-10T19:40:00Z' },
           ],
+          monthlyCounts: [0, 0, 0, 0, 0, 2],
         },
-        { name: 'self-doubt', entryCount: 1, recentEntries: [{ id: 'j1', title: 'A slow start', createdAt: '2026-11-12T08:15:00.123Z' }] },
+        {
+          name: 'self-doubt',
+          entryCount: 1,
+          recentEntries: [{ id: 'j1', title: 'A slow start', createdAt: '2026-11-12T08:15:00.123Z' }],
+          monthlyCounts: [0, 0, 0, 0, 0, 1],
+        },
       ],
+      months: ['2026-06', '2026-07', '2026-08', '2026-09', '2026-10', '2026-11'],
+      entriesPerMonth: [0, 0, 0, 0, 0, 2],
     },
     journals: [
       {
