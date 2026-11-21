@@ -13,6 +13,7 @@ import { getErrorMessage } from '@/api/client'
 import { FeedbackPanel } from '@/features/ai/FeedbackPanel'
 import { useRequestFeedback } from '@/features/ai/hooks'
 import { PromptPicker } from '@/features/ai/PromptPicker'
+import { EntryExportMenu } from '@/features/export/EntryExportMenu'
 import { drafts } from '../drafts'
 import { useDeleteEntry, useSaveEntry } from '../hooks'
 
@@ -157,6 +158,7 @@ export function EntryEditor({ entry, startingContent = '' }: EntryEditorProps) {
             <p role="status" className="ml-auto text-sm text-ink-muted">
               {status}
             </p>
+            {entry && <EntryExportMenu entry={entry} />}
             {entry && (
               <Button
                 variant="ghost"

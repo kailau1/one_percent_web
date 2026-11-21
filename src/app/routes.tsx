@@ -1,6 +1,7 @@
 import { Navigate, type RouteObject } from 'react-router'
 import { AppShell } from '@/components/layout/AppShell'
 import { AccountPage } from '@/features/account/AccountPage'
+import { PrintPage } from '@/features/export/PrintPage'
 import { LoginPage } from '@/features/auth/LoginPage'
 import { PublicOnly, RequireAuth } from '@/features/auth/RequireAuth'
 import { SignupPage } from '@/features/auth/SignupPage'
@@ -25,6 +26,8 @@ export const routes: RouteObject[] = [
   {
     element: <RequireAuth />,
     children: [
+      // the printable journal sits outside the app shell: nothing but the writing on the page
+      { path: 'print', element: <PrintPage /> },
       {
         element: <AppShell />,
         children: [
