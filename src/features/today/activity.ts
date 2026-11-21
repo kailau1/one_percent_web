@@ -1,22 +1,19 @@
-import type { Habit, HabitHistoryRecord, JournalEntry } from '@/api/types'
+import type { Habit, HabitHistoryRecord } from '@/api/types'
 import { toDayNumber } from '@/features/habits/streaks'
-import { parseLocalDateTime } from '@/lib/dates'
 
 /**
  * The days (as day numbers) on which the user "showed up": wrote a journal entry or completed
  * at least one habit. Today's live habit ticks count before the history is refetched.
+ * `entryDays` are "YYYY-MM-DD" days with an entry (GET /api/journals/days).
  */
 export function activeDays(
-  entries: JournalEntry[] = [],
+  entryDays: string[] = [],
   history: HabitHistoryRecord[] = [],
   habits: Habit[] = [],
   today: Date = new Date(),
 ): Set<number> {
   const days = new Set<number>()
-  for (const entry of entries) {
-    const written = parseLocalDateTime(entry.createdAt)
-    if (written) days.add(toDayNumber(written))
-  }
+  for (const day of entryDays) days.add(toDayNumber(day))
   const todayNumber = toDayNumber(today)
   for (const record of history) {
     // today is decided by the live habit list below, so an un-tick is reflected immediately

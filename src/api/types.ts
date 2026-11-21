@@ -9,8 +9,32 @@ export interface JournalEntry {
   content: string
   /** AI feedback (markdown), if any has been generated. */
   llmResponse?: string | null
-  /** ISO date-time without a timezone, e.g. "2026-11-14T09:30:00.123". */
+  /** When it was written: a UTC timestamp, e.g. "2026-11-14T09:30:00.123Z". Parse with parseDateTime. */
   createdAt: string
+}
+
+/** One page of a longer list (PageDTO). `page` counts from 0. */
+export interface Page<T> {
+  items: T[]
+  page: number
+  size: number
+  totalItems: number
+  totalPages: number
+  hasNext: boolean
+}
+
+/** GET /api/insights/themes (ThemeInsightsDTO): what the user's journal keeps coming back to. */
+export interface ThemeInsights {
+  totalEntries: number
+  /** Entries that could be matched to themes; the rest were saved while AI analysis was unavailable. */
+  analysedEntries: number
+  /** Most common first. Each analysed entry counts towards its three closest themes. */
+  themes: {
+    name: string
+    entryCount: number
+    /** Up to three, newest first. */
+    recentEntries: { id: string; title: string | null; createdAt: string }[]
+  }[]
 }
 
 export type HabitType = 'standard' | 'trigger-action'
@@ -42,6 +66,16 @@ export interface AiResponse {
 
 export interface AuthResponse {
   token: string
+}
+
+/** GET /api/users/me (UserDTO). */
+export interface UserProfile {
+  id: string
+  firstName: string
+  lastName: string
+  email: string
+  /** IANA time zone such as "Europe/London": where the user's days start. Null until first set. */
+  timeZone: string | null
 }
 
 /** The logged-in user, read from the JWT's claims. */
