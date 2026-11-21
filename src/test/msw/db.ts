@@ -1,4 +1,4 @@
-import type { Habit, HabitHistoryRecord, JournalEntry, ThemeInsights, UserProfile } from '@/api/types'
+import type { AiContext, Habit, HabitHistoryRecord, JournalEntry, ThemeInsights, UserProfile } from '@/api/types'
 
 /**
  * The fake backend's data. Tests change it directly (db.journals = []) to set up a scenario;
@@ -16,6 +16,8 @@ export interface Db {
   prompts: string[]
   tip: string
   feedback: string
+  /** GET /api/users/me/ai-context, minus the preview (the handler renders it like the backend). */
+  aiContext: Omit<AiContext, 'preview'>
 }
 
 /** "YYYY-MM-DD" for the local day `daysAgo` days before today. */
@@ -104,6 +106,14 @@ function defaults(): Db {
     prompts: ['What drained you today?', 'What are you proud of this week?', 'What would make tomorrow easier?'],
     tip: 'Leave your journal on your pillow so you see it before bed.',
     feedback: 'It sounds like starting was the hard part. Try the **two-minute rule**: commit to just two minutes.',
+    aiContext: {
+      habits: ['Read 10 pages'],
+      themes: ['procrastination', 'self-doubt'],
+      facts: [{ id: 'f1', text: 'I work night shifts', createdAt: '2026-11-01T09:00:00Z' }],
+      settings: { useHabits: true, useThemes: true, useFacts: true, usePastAdvice: true },
+      maxFacts: 20,
+      maxFactLength: 200,
+    },
   }
 }
 

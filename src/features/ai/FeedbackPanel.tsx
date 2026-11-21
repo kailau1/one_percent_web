@@ -1,3 +1,4 @@
+import { Link } from 'react-router'
 import { Sparkles } from 'lucide-react'
 import Markdown from 'react-markdown'
 import { ErrorState } from '@/components/ErrorState'
@@ -20,9 +21,20 @@ interface FeedbackPanelProps {
  * AI feedback on the open entry. Lives beside the writing so it can be read against the text.
  * A failed request shows an error here and is never stored as if it were feedback.
  */
-export function FeedbackPanel({ feedback, isPending, error, onRequest, nothingToReview, needsSave }: FeedbackPanelProps) {
+export function FeedbackPanel({
+  feedback,
+  isPending,
+  error,
+  onRequest,
+  nothingToReview,
+  needsSave,
+}: FeedbackPanelProps) {
   const hasFeedback = Boolean(feedback?.trim())
-  const askLabel = needsSave ? 'Save and get feedback' : hasFeedback ? 'Get fresh feedback' : 'Get feedback'
+  const askLabel = needsSave
+    ? 'Save and get feedback'
+    : hasFeedback
+      ? 'Get fresh feedback'
+      : 'Get feedback'
 
   return (
     <aside aria-label="Feedback" className="rounded-card border border-line bg-surface p-5">
@@ -33,14 +45,18 @@ export function FeedbackPanel({ feedback, isPending, error, onRequest, nothingTo
 
       {isPending ? (
         <div role="status" className="flex flex-col gap-2.5">
-          <p className="text-sm text-ink-muted">Reading your entry. This can take a little while.</p>
+          <p className="text-sm text-ink-muted">
+            Reading your entry. This can take a little while.
+          </p>
           <Skeleton className="h-4 w-full" />
           <Skeleton className="h-4 w-11/12" />
           <Skeleton className="h-4 w-4/5" />
         </div>
       ) : (
         <>
-          {Boolean(error) && <ErrorState compact error={error} onRetry={onRequest} className="mb-4 flex-wrap" />}
+          {Boolean(error) && (
+            <ErrorState compact error={error} onRetry={onRequest} className="mb-4 flex-wrap" />
+          )}
 
           {hasFeedback ? (
             <div className="feedback-prose text-[0.9375rem] leading-7">
@@ -49,7 +65,8 @@ export function FeedbackPanel({ feedback, isPending, error, onRequest, nothingTo
           ) : (
             !error && (
               <p className="text-[0.9375rem] leading-7 text-ink-muted">
-                Get a short, personal reflection on this entry. It takes your habits and what you’ve written before into account.
+                Get a short, personal reflection on this entry. It takes your habits and what you’ve
+                written before into account.
               </p>
             )
           )}
@@ -66,6 +83,11 @@ export function FeedbackPanel({ feedback, isPending, error, onRequest, nothingTo
             </Button>
           )}
           {nothingToReview && <p className="mt-2 text-sm text-ink-muted">Write something first.</p>}
+          <p className="mt-4 text-sm">
+            <Link to="/about-you" className="text-ink-muted hover:text-action hover:underline">
+              What the AI knows about you
+            </Link>
+          </p>
         </>
       )}
     </aside>

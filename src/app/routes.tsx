@@ -1,5 +1,6 @@
 import { Navigate, type RouteObject } from 'react-router'
 import { AppShell } from '@/components/layout/AppShell'
+import { AboutYouPage } from '@/features/aboutYou/AboutYouPage'
 import { AccountPage } from '@/features/account/AccountPage'
 import { PrintPage } from '@/features/export/PrintPage'
 import { LoginPage } from '@/features/auth/LoginPage'
@@ -45,6 +46,7 @@ export const routes: RouteObject[] = [
           { path: 'habits', element: <HabitsPage /> },
           { path: 'insights', element: <InsightsPage /> },
           { path: 'account', element: <AccountPage /> },
+          { path: 'about-you', element: <AboutYouPage /> },
           { path: '*', element: <NotFoundPage /> },
         ],
       },

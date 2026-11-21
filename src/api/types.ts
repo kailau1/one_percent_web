@@ -95,3 +95,32 @@ export interface User {
   firstName: string
   lastName: string
 }
+
+/** Something the user has told One Percent about themselves, for the AI to keep in mind. */
+export interface AiFact {
+  id: string
+  text: string
+  createdAt: string
+}
+
+/** Which kinds of context the AI is given. */
+export interface AiContextSettings {
+  useHabits: boolean
+  useThemes: boolean
+  useFacts: boolean
+  usePastAdvice: boolean
+}
+
+/** GET /api/users/me/ai-context: everything the AI could be told about the user, and what it is told. */
+export interface AiContext {
+  /** Habits ticked or changed in the last 7 days, as the AI sees them. */
+  habits: string[]
+  themes: string[]
+  /** Oldest first. */
+  facts: AiFact[]
+  settings: AiContextSettings
+  /** The context text exactly as it is sent with feedback and prompt requests. */
+  preview: string
+  maxFacts: number
+  maxFactLength: number
+}
